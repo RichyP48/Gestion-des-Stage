@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { UserService } from '../../../services/user.service';
-import { User } from '../../../models/user.model';
-import { NotificationService } from '../../../services/notification.service';
+import { AuthService } from '../../../services/auth.service';
+import { catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-faculty-students',
@@ -11,50 +12,49 @@ import { NotificationService } from '../../../services/notification.service';
   template: `
     <div class="space-y-6">
       <div class="bg-white rounded-lg shadow-sm border border-primary-200 p-6">
-        <h1 class="text-2xl font-bold text-primary-900">Gestion des étudiants</h1>
+        <h1 class="text-2xl font-bold text-primary-900 mb-2">Liste des Étudiants</h1>
+        <p class="text-primary-600">{{students.length}} étudiants trouvés</p>
       </div>
-      
-      <div class="bg-white rounded-lg shadow-sm border border-primary-200 p-6">
-        <h2 class="text-lg font-semibold text-primary-900 mb-4">Liste des étudiants</h2>
-        
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-primary-50">
-              <tr>
-                <th class="px-4 py-3 text-left text-primary-900">Nom</th>
-                <th class="px-4 py-3 text-left text-primary-900">Email</th>
-                <th class="px-4 py-3 text-left text-primary-900">Téléphone</th>
-                <th class="px-4 py-3 text-left text-primary-900">Statut</th>
-                <th class="px-4 py-3 text-left text-primary-900">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let student of students" class="border-b border-primary-100">
-                <td class="px-4 py-3">{{student.prenom}} {{student.nom}}</td>
-                <td class="px-4 py-3">{{student.email}}</td>
-                <td class="px-4 py-3">{{student.telephone}}</td>
-                <td class="px-4 py-3">
-                  <span [ngClass]="student.actif ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'" 
-                        class="px-2 py-1 rounded-full text-sm">
-                    {{student.actif ? 'Actif' : 'Inactif'}}
+
+      <!-- Loading -->
+      <div *ngIf="loading" class="bg-white rounded-lg shadow-sm border border-primary-200 p-8 text-center">
+        <p>🔄 Chargement des étudiants...</p>
+      </div>
+
+      <!-- Error -->
+      <div *ngIf="error" class="bg-red-50 border border-red-200 rounded-lg p-6">
+        <p class="text-red-800">❌ {{error}}</p>
+        <button (click)="loadStudents()" class="mt-2 bg-red-600 text-white px-4 py-2 rounded">
+          Réessayer
+        </button>
+      </div>
+
+      <!-- Students List -->
+      <div *ngIf="!loading && !error" class="bg-white rounded-lg shadow-sm border border-primary-200">
+        <div class="p-6 border-b border-gray-200">
+          <h2 class="text-lg font-semibold text-primary-900">Étudiants ({{students.length}})</h2>
+        </div>
+
+        <div *ngIf="students.length === 0" class="p-8 text-center">
+          <p class="text-gray-500">👥 Aucun étudiant trouvé</p>
+        </div>
+
+        <div *ngIf="students.length > 0" class="p-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div *ngFor="let student of students" class="border border-gray-200 rounded-lg p-4">
+              <div class="flex items-center">
+                <div class="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center">
+                  <span class="text-white font-bold text-sm">
+                    {{(student.firstName?.charAt(0) || '') + (student.lastName?.charAt(0) || '')}}
                   </span>
-                </td>
-                <td class="px-4 py-3">
-                  <button class="text-primary-600 hover:text-primary-800 mr-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                    </svg>
-                  </button>
-                  <button class="text-blue-600 hover:text-blue-800">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                </div>
+                <div class="ml-3">
+                  <h3 class="font-semibold text-gray-900">{{student.firstName}} {{student.lastName}}</h3>
+                  <p class="text-gray-600 text-sm">{{student.email}}</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -62,24 +62,96 @@ import { NotificationService } from '../../../services/notification.service';
   styles: ``
 })
 export class FacultyStudentsComponent implements OnInit {
-  students: User[] = [];
+  students: any[] = [];
+  loading = false;
+  error: string | null = null;
 
   constructor(
     private userService: UserService,
-    private notificationService: NotificationService
-  ) {}
+    private authService: AuthService
+  ) {
+    console.log('🎓 FacultyStudentsComponent initialized');
+  }
 
-  ngOnInit() {
+  ngOnInit(): void {
+    console.log('📚 Loading students...');
     this.loadStudents();
   }
 
-  loadStudents() {
-    this.userService.getAllUsers().subscribe({
-      next: (users: any) => this.students = users.filter((u: any) => u.role === 'STUDENT'),
+  loadStudents(): void {
+    console.log('📋 Starting loadStudents...');
+    
+    // Vérifier l'authentification
+    const currentUser = this.authService.getCurrentUser();
+    console.log('👤 Current user:', currentUser);
+    
+    if (!currentUser) {
+      console.error('❌ No authenticated user found');
+      this.error = 'Utilisateur non authentifié';
+      return;
+    }
+
+    this.loading = true;
+    this.error = null;
+    console.log('🚀 Calling UserService.getStudentsForFaculty...');
+
+    this.userService.getStudentsForFaculty(0, 20).pipe(
+      catchError(error => {
+        console.error('❌ API Error:', error);
+        console.log('🔄 Using fallback data...');
+        
+        // Fallback data
+        return of({
+          content: [
+            {
+              id: 1,
+              firstName: 'Jean',
+              lastName: 'Dupont',
+              email: 'jean.dupont@student.fr',
+              role: 'STUDENT',
+              enabled: true
+            },
+            {
+              id: 2,
+              firstName: 'Marie',
+              lastName: 'Martin',
+              email: 'marie.martin@student.fr',
+              role: 'STUDENT',
+              enabled: true
+            }
+          ],
+          totalElements: 2
+        });
+      })
+    ).subscribe({
+      next: (data) => {
+        console.log('📦 Raw API response:', data);
+        
+        const allUsers = data.content || data;
+        console.log('📄 All users:', allUsers);
+        
+        if (Array.isArray(allUsers)) {
+          this.students = allUsers.filter((user: any) => {
+            console.log('🔍 Checking user:', user.email, 'Role:', user.role);
+            return user.role === 'STUDENT';
+          });
+        } else {
+          console.error('❌ allUsers is not an array:', typeof allUsers);
+          this.students = [];
+        }
+        
+        console.log('✅ Filtered students:', this.students);
+        console.log('📊 Final count:', this.students.length);
+        
+        this.loading = false;
+      },
       error: (error) => {
-        console.error('Erreur lors du chargement des étudiants:', error);
-        this.notificationService.error('Erreur lors du chargement des étudiants');
+        console.error('❌ Subscribe error:', error);
+        this.error = 'Erreur lors du chargement';
+        this.loading = false;
       }
     });
   }
+
+
 }

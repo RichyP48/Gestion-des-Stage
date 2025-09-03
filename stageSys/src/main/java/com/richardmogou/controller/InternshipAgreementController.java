@@ -114,7 +114,7 @@ public class InternshipAgreementController {
     @GetMapping("/faculty/me/agreements/pending") // Route defined in spec
     @PreAuthorize("hasRole('FACULTY')")
     public ResponseEntity<?> getAgreementsPendingFacultyValidation(
-             @PageableDefault(size = 10, sort = "createdAt,asc") Pageable pageable) {
+             @PageableDefault(size = 10) Pageable pageable) {
          log.info("Received request to list agreements pending validation for current faculty");
          try {
              Page<InternshipAgreementResponse> responsePage = agreementService.getAgreementsPendingFacultyValidation(pageable);
@@ -170,7 +170,7 @@ public class InternshipAgreementController {
     @GetMapping("/admin/agreements/pending") // Route defined in spec
     @PreAuthorize("hasRole('ADMIN')")
      public ResponseEntity<?> getAgreementsPendingAdminApproval(
-             @PageableDefault(size = 10, sort = "createdAt,asc") Pageable pageable) {
+             @PageableDefault(size = 10) Pageable pageable) {
          log.info("Received request to list agreements pending admin approval");
          try {
              Page<InternshipAgreementResponse> responsePage = agreementService.getAgreementsPendingAdminApproval(pageable);
@@ -221,7 +221,7 @@ public class InternshipAgreementController {
     @GetMapping("/students/me/agreements") // Route defined in spec
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<?> getAgreementsForCurrentStudent(
-             @PageableDefault(size = 10, sort = "createdAt,desc") Pageable pageable) {
+             @PageableDefault(size = 10) Pageable pageable) {
          log.info("Received request to list agreements for current student");
          try {
              Page<InternshipAgreementResponse> responsePage = agreementService.getAgreementsForCurrentStudent(pageable);

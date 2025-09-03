@@ -10,7 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +31,13 @@ public class AdminCompanyService {
     @Transactional(readOnly = true)
     public Page<CompanyResponse> getAllCompanies(Pageable pageable) {
         log.debug("Admin request to fetch all companies");
+        
+        // Apply default sorting if no sort is specified
+        if (pageable.getSort().isUnsorted()) {
+            pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), 
+                Sort.by(Sort.Direction.ASC, "name"));
+        }
+        
         Page<Company> companyPage = companyRepository.findAll(pageable);
         // Need to handle lazy loading of primaryContactUser if CompanyResponse needs it
         return companyPage.map(CompanyResponse::fromEntity);

@@ -86,41 +86,97 @@ enum UserRole{
 export class DashboardLayoutComponent {
   sidebarOpen: boolean = true;
   
-  currentUser = {
-    firstName: 'John Doe',
-    role: 'STUDENT'
+  currentUser: any = {
+    firstName: 'Utilisateur',
+    lastName: '',
+    role: 'STUDENT',
+    email: ''
   };
 
- menuItems: SidebarItem[] = [];
+  menuItems: SidebarItem[] = [];
 
-constructor(private authService: AuthService, private router: Router) {
-  // Vérifier si l'utilisateur est connecté
-  if (!this.authService.isLoggedIn()) {
-    this.router.navigate(['/auth/login']);
-    return;
-  }
-  
-  // S'abonner aux changements d'utilisateur
-  this.authService.currentUser$.subscribe(user => {
-    if (user) {
-      this.currentUser = user;
-      this.menuItems = this.getMenuItems();
-      console.log('Utilisateur chargé dans dashboard:', user);
-    } else {
-      // Essayer de charger le profil utilisateur depuis l'API
-      this.authService.getUserProfile().subscribe({
-        next: (profile) => {
-          this.currentUser = profile;
-          this.menuItems = this.getMenuItems();
-        },
-        error: (error) => {
-          console.error('Erreur lors du chargement du profil:', error);
-          this.router.navigate(['/auth/login']);
-        }
-      });
+  constructor(private authService: AuthService, private router: Router) {
+    console.log('📱 DashboardLayoutComponent initialized');
+    
+    // Vérifier si l'utilisateur est connecté
+    if (!this.authService.isLoggedIn()) {
+      console.log('❌ User not logged in, redirecting to login');
+      this.router.navigate(['/auth/login']);
+      return;
     }
-  });
-}
+    
+    this.loadUserData();
+  }
+
+  private loadUserData(): void {
+    console.log('👤 Loading user data...');
+    
+    // Récupérer l'utilisateur depuis le service d'auth
+    const authUser = this.authService.getCurrentUser();
+    if (authUser) {
+      console.log('✅ User found in auth service:', authUser);
+      this.currentUser = {
+        firstName: authUser.firstName || 'Utilisateur',
+        lastName: authUser.lastName || '',
+        role: authUser.role || 'STUDENT',
+        email: authUser.email || '',
+        id: authUser.id
+      };
+      this.updateMenuItems();
+    } else {
+      console.log('⚠️ No user in auth service, trying to load from storage...');
+      
+      // Fallback: utiliser les données du localStorage
+      const userRole = this.authService.getCurrentUserRole();
+      const userId = this.authService.getCurrentUserId();
+      
+      if (userRole && userId) {
+        console.log('✅ User data found in storage:', { role: userRole, id: userId });
+        this.currentUser = {
+          firstName: 'Utilisateur',
+          lastName: '',
+          role: userRole,
+          email: '',
+          id: userId
+        };
+        this.updateMenuItems();
+        
+        // Essayer de charger le profil complet
+        this.loadUserProfile();
+      } else {
+        console.error('❌ No user data found, redirecting to login');
+        this.router.navigate(['/auth/login']);
+      }
+    }
+  }
+
+  private loadUserProfile(): void {
+    console.log('📄 Loading user profile from API...');
+    
+    this.authService.getUserProfile().subscribe({
+      next: (profile) => {
+        console.log('✅ User profile loaded:', profile);
+        this.currentUser = {
+          firstName: profile.firstName || 'Utilisateur',
+          lastName: profile.lastName || '',
+          role: profile.role,
+          email: profile.email || '',
+          id: profile.id
+        };
+        this.updateMenuItems();
+      },
+      error: (error) => {
+        console.error('❌ Error loading user profile:', error);
+        // Continue with existing data from storage
+      }
+    });
+  }
+
+  private updateMenuItems(): void {
+    console.log('📝 Updating menu items for role:', this.currentUser.role);
+    this.menuItems = this.getMenuItems();
+    console.log('📝 Menu items updated:', this.menuItems);
+  }
 onSidebarToggle(open: boolean) {
   this.sidebarOpen = open;
 }
@@ -187,7 +243,9 @@ onSidebarToggle(open: boolean) {
   }
 
   get userInitials(): string {
-    return this.currentUser.firstName.split(' ').map(n => n[0]).join('').toUpperCase();
+    const firstName = this.currentUser.firstName || 'U';
+    const lastName = this.currentUser.lastName || '';
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   }
 
   toggleSidebar() {

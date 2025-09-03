@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -79,7 +80,7 @@ public class ApplicationController {
     @GetMapping("/students/me/applications")
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<?> getApplicationsForCurrentStudent(
-            @PageableDefault(size = 10, sort = "applicationDate,desc") Pageable pageable) {
+            @PageableDefault(size = 10) Pageable pageable) {
         log.info("Received request to list applications for current student");
         try {
              Page<ApplicationResponse> responsePage = applicationService.getApplicationsForCurrentStudent(pageable);
@@ -103,7 +104,7 @@ public class ApplicationController {
     @GetMapping("/companies/me/applications")
     @PreAuthorize("hasRole('COMPANY')")
     public ResponseEntity<?> getApplicationsForCurrentCompany(
-            @PageableDefault(size = 10, sort = "applicationDate,desc") Pageable pageable,
+            @PageableDefault(size = 10) Pageable pageable,
             @RequestParam(required = false) Long offerId) { // Filter by offer ID
         log.info("Received request to list applications for current company, filterOfferId: {}", offerId);
          try {

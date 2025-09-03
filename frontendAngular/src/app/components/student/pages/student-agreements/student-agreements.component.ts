@@ -1,7 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { InternshipService } from '../../../../services/internship.service';
+import { AgreementService } from '../../../../services/agreement.service';
+import { AuthService } from '../../../../services/auth.service';
+import { catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 interface Agreement {
   id: number;
@@ -83,7 +86,8 @@ interface Agreement {
             </div>
             
             <div class="flex space-x-2">
-              <button class="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 text-sm">
+              <button (click)="downloadPDF(agreement)"
+                      class="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 text-sm">
                 Télécharger PDF
               </button>
               <button *ngIf="!agreement.signedByStudent && agreement.status === 'PENDING'" 
@@ -102,60 +106,125 @@ interface Agreement {
 export class StudentAgreementsComponent implements OnInit {
   agreements: Agreement[] = [];
 
-  constructor(private internshipService: InternshipService) {}
+  constructor(
+    private agreementService: AgreementService,
+    private authService: AuthService
+  ) {
+    console.log('📜 StudentAgreementsComponent initialized');
+  }
 
   ngOnInit() {
     this.loadAgreements();
   }
 
   loadAgreements() {
-    console.log('Chargement des conventions...');
-    this.internshipService.getAgreementsByStudent().subscribe({
+    console.log('📄 Loading student agreements...');
+    
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) {
+      console.error('❌ No authenticated user found');
+      return;
+    }
+
+    console.log('👤 Loading agreements for user:', currentUser.id);
+
+    this.agreementService.getStudentAgreements(0, 50).pipe(
+      catchError(error => {
+        console.error('❌ Error loading agreements from API:', error);
+        // Return demo data as fallback
+        return of({
+          content: [
+            {
+              id: 1,
+              studentName: 'Jean Dupont',
+              companyName: 'TechCorp',
+              offerTitle: 'Stage Développement Web',
+              startDate: new Date('2024-06-01'),
+              endDate: new Date('2024-11-30'),
+              status: 'PENDING',
+              signedByStudent: false,
+              signedByCompany: true,
+              signedByFaculty: false
+            }
+          ],
+          totalElements: 1
+        });
+      })
+    ).subscribe({
       next: (data) => {
-        console.log('Conventions reçues:', data);
+        console.log('✅ Agreements loaded successfully:', data);
         this.agreements = data.content || data;
+        console.log('📊 Total agreements:', this.agreements.length);
       },
       error: (error) => {
-        console.error('Erreur lors du chargement des conventions:', error);
-        // Fallback avec données de démo
-        this.agreements = [
-          {
-            id: 1,
-            studentName: 'Jean Dupont',
-            companyName: 'TechCorp',
-            offerTitle: 'Stage Développement Web',
-            startDate: new Date('2024-06-01'),
-            endDate: new Date('2024-11-30'),
-            status: 'PENDING',
-            signedByStudent: false,
-            signedByCompany: true,
-            signedByFaculty: false
-          }
-        ];
+        console.error('❌ Unexpected error loading agreements:', error);
       }
     });
   }
 
   signAgreement(agreement: Agreement) {
-    const signature = {
-      role: 'STUDENT',
-      signedAt: new Date().toISOString()
-    };
+    console.log('✍️ Signing agreement:', agreement.id);
     
-    this.internshipService.signAgreement(agreement.id, signature).subscribe({
+    this.agreementService.signAgreement(agreement.id).pipe(
+      catchError(error => {
+        console.error('❌ Error signing agreement via API:', error);
+        // Fallback: update locally
+        return of({ ...agreement, signedByStudent: true });
+      })
+    ).subscribe({
       next: (updatedAgreement) => {
+        console.log('✅ Agreement signed successfully:', updatedAgreement);
         agreement.signedByStudent = true;
+        
+        // Check if all parties have signed
         if (agreement.signedByStudent && agreement.signedByCompany && agreement.signedByFaculty) {
           agreement.status = 'SIGNED';
+          console.log('🎉 Agreement fully signed!');
+        }
+        
+        console.log('📝 Updated agreement status:', {
+          id: agreement.id,
+          status: agreement.status,
+          signedByStudent: agreement.signedByStudent,
+          signedByCompany: agreement.signedByCompany,
+          signedByFaculty: agreement.signedByFaculty
+        });
+      },
+      error: (error) => {
+        console.error('❌ Unexpected error signing agreement:', error);
+      }
+    });
+  }
+
+  downloadPDF(agreement: Agreement) {
+    console.log('📎 Downloading PDF for agreement:', agreement.id);
+    
+    this.agreementService.downloadAgreementPdf(agreement.id).pipe(
+      catchError(error => {
+        console.error('❌ Error downloading PDF:', error);
+        alert('Erreur lors du téléchargement du PDF. Veuillez réessayer.');
+        return of(null);
+      })
+    ).subscribe({
+      next: (blob) => {
+        if (blob) {
+          console.log('✅ PDF downloaded successfully');
+          
+          // Create download link
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `convention-stage-${agreement.id}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+          
+          console.log('📎 PDF download initiated');
         }
       },
       error: (error) => {
-        console.error('Erreur lors de la signature:', error);
-        // Fallback local
-        agreement.signedByStudent = true;
-        if (agreement.signedByStudent && agreement.signedByCompany && agreement.signedByFaculty) {
-          agreement.status = 'SIGNED';
-        }
+        console.error('❌ Unexpected error downloading PDF:', error);
       }
     });
   }

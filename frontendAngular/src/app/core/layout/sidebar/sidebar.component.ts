@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { CommonModule, NgSwitch, NgSwitchCase } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 
@@ -16,7 +16,7 @@ export interface SidebarToggleEvent {
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, NgSwitch, NgSwitchCase, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterLink, RouterLinkActive],
   template: `
     <aside class="w-64 bg-primary-900 text-white min-h-screen fixed left-0 top-0 z-40 transition-transform duration-300 ease-in-out"
            [ngClass]="{'translate-x-0': isOpen, '-translate-x-full': !isOpen, 'md:translate-x-0': true}">

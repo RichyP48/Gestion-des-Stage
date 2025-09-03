@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -58,7 +59,7 @@ public class InternshipOfferController {
      */
     @GetMapping("/offers")
     public ResponseEntity<Page<InternshipOfferResponse>> getAllOffers(
-            @PageableDefault(size = 10, sort = "createdAt,desc") Pageable pageable,
+            @PageableDefault(size = 10) Pageable pageable,
             @RequestParam(required = false) Map<String, String> filters) { // Capture all query params as filters
         log.info("Received request to list offers with filters: {}", filters);
         Page<InternshipOfferResponse> offerPage = internshipOfferService.getAllOffers(pageable, filters);
@@ -92,7 +93,7 @@ public class InternshipOfferController {
     @GetMapping("/companies/me/offers")
     @PreAuthorize("hasRole('COMPANY')")
      public ResponseEntity<?> getOffersForCurrentCompany(
-             @PageableDefault(size = 10, sort = "createdAt,desc") Pageable pageable) {
+             @PageableDefault(size = 10) Pageable pageable) {
         log.info("Received request to list offers for current company");
          try {
              Page<InternshipOfferResponse> offerPage = internshipOfferService.getOffersForCurrentCompany(pageable);

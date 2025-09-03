@@ -19,7 +19,9 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -136,6 +138,13 @@ public class InternshipAgreementService {
             throw new UnauthorizedAccessException("User does not have FACULTY role.");
         }
         log.debug("Fetching agreements pending validation for faculty ID: {}", currentFaculty.getId());
+        
+        // Apply default sorting if no sort is specified
+        if (pageable.getSort().isUnsorted()) {
+            pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), 
+                Sort.by(Sort.Direction.ASC, "createdAt"));
+        }
+        
         // This assumes faculty is assigned directly. If based on department/student, logic needs adjustment.
         Page<InternshipAgreement> agreementPage = agreementRepository.findByFacultyValidatorAndStatus(
                 currentFaculty, InternshipAgreementStatus.PENDING_FACULTY_VALIDATION, pageable);
@@ -198,6 +207,13 @@ public class InternshipAgreementService {
     public Page<InternshipAgreementResponse> getAgreementsPendingAdminApproval(Pageable pageable) {
          // No specific admin assigned here, just fetching by status
          log.debug("Fetching agreements pending admin approval");
+         
+         // Apply default sorting if no sort is specified
+         if (pageable.getSort().isUnsorted()) {
+             pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), 
+                 Sort.by(Sort.Direction.ASC, "createdAt"));
+         }
+         
          Page<InternshipAgreement> agreementPage = agreementRepository.findByStatus(
                  InternshipAgreementStatus.PENDING_ADMIN_APPROVAL, pageable);
         return agreementPage.map(InternshipAgreementResponse::fromEntity);
@@ -257,6 +273,13 @@ public class InternshipAgreementService {
             throw new UnauthorizedAccessException("User does not have STUDENT role.");
         }
         log.debug("Fetching agreements for student ID: {}", currentStudent.getId());
+        
+        // Apply default sorting if no sort is specified
+        if (pageable.getSort().isUnsorted()) {
+            pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), 
+                Sort.by(Sort.Direction.DESC, "createdAt"));
+        }
+        
         Page<InternshipAgreement> agreementPage = agreementRepository.findByApplication_Student(currentStudent, pageable);
         return agreementPage.map(InternshipAgreementResponse::fromEntity);
     }
@@ -274,6 +297,13 @@ public class InternshipAgreementService {
     public Page<InternshipAgreementResponse> getAllAgreements(Pageable pageable) {
         // No specific filtering here, admin sees all. Add filters if needed.
         log.debug("Admin request to fetch all agreements");
+        
+        // Apply default sorting if no sort is specified
+        if (pageable.getSort().isUnsorted()) {
+            pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), 
+                Sort.by(Sort.Direction.DESC, "createdAt"));
+        }
+        
         Page<InternshipAgreement> agreementPage = agreementRepository.findAll(pageable);
         return agreementPage.map(InternshipAgreementResponse::fromEntity);
     }

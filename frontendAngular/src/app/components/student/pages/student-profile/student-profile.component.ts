@@ -2,8 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../../../services/user.service';
+import { AuthService } from '../../../../services/auth.service';
 import { User } from '../../../../models/user.model';
-import { NotificationService } from '../../../../services/notification.service';
+import { catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-student-profile',
@@ -80,33 +82,106 @@ export class StudentProfileComponent implements OnInit {
 
   constructor(
     private userService: UserService,
-    private notificationService: NotificationService
-  ) {}
+    private authService: AuthService
+  ) {
+    console.log('👤 StudentProfileComponent initialized');
+  }
 
   ngOnInit() {
     this.loadProfile();
   }
 
   loadProfile() {
-    this.userService.getUserById(1).subscribe({
+    console.log('📄 Loading user profile...');
+    
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) {
+      console.error('❌ No authenticated user found');
+      return;
+    }
+
+    console.log('👤 Current user from auth:', currentUser);
+
+    this.userService.getCurrentUser().pipe(
+      catchError(error => {
+        console.error('❌ Error loading profile from API:', error);
+        // Return current user data as fallback
+        return of({
+          id: currentUser.id,
+          firstName: currentUser.firstName || '',
+          lastName: currentUser.lastName || '',
+          email: currentUser.email || '',
+          role: currentUser.role,
+          telephone: '',
+          enabled: true,
+          createdAt: '',
+          updatedAt: ''
+        });
+      })
+    ).subscribe({
       next: (user) => {
-        this.profile = { ...user };
+        console.log('✅ Profile loaded successfully:', user);
+        this.profile = {
+          id: user.id,
+          nom: user.lastName || '',
+          prenom: user.firstName || '',
+          email: user.email || '',
+          telephone: user.telephone || '',
+          role: user.role
+        };
+        console.log('📝 Profile data mapped:', this.profile);
       },
       error: (error) => {
-        console.error('Erreur lors du chargement du profil:', error);
-        this.notificationService.error('Erreur lors du chargement du profil');
+        console.error('❌ Unexpected error loading profile:', error);
       }
     });
   }
 
   saveProfile() {
-    this.userService.updateUser(this.profile.id || 1, this.profile).subscribe({
-      next: () => {
-        this.notificationService.success('Profil mis à jour avec succès');
+    console.log('💾 Saving profile...', this.profile);
+    
+    if (!this.profile.id) {
+      console.error('❌ No profile ID found');
+      alert('Erreur: ID utilisateur manquant');
+      return;
+    }
+
+    const updateData = {
+      firstName: this.profile.prenom,
+      lastName: this.profile.nom,
+      email: this.profile.email,
+      telephone: this.profile.telephone
+    };
+
+    console.log('📤 Sending update data:', updateData);
+
+    this.userService.updateProfile(updateData).pipe(
+      catchError(error => {
+        console.error('❌ Error saving profile via API:', error);
+        alert('Erreur lors de la sauvegarde du profil. Veuillez réessayer.');
+        return of(null);
+      })
+    ).subscribe({
+      next: (updatedUser) => {
+        if (updatedUser) {
+          console.log('✅ Profile saved successfully:', updatedUser);
+          alert('Profil mis à jour avec succès!');
+          
+          // Update local profile with response data
+          this.profile = {
+            id: updatedUser.id,
+            nom: updatedUser.lastName || '',
+            prenom: updatedUser.firstName || '',
+            email: updatedUser.email || '',
+            telephone: updatedUser.telephone || '',
+            role: updatedUser.role
+          };
+          
+          console.log('🔄 Profile updated locally:', this.profile);
+        }
       },
       error: (error) => {
-        console.error('Erreur lors de la sauvegarde:', error);
-        this.notificationService.error('Erreur lors de la sauvegarde du profil');
+        console.error('❌ Unexpected error saving profile:', error);
       }
     });
   }

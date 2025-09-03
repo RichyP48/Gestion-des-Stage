@@ -16,7 +16,9 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,6 +77,12 @@ public class InternshipOfferService {
     public Page<InternshipOfferResponse> getAllOffers(Pageable pageable, Map<String, String> filters) {
         log.debug("Fetching all offers with filters: {}", filters);
 
+        // Apply default sorting if no sort is specified
+        if (pageable.getSort().isUnsorted()) {
+            pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), 
+                Sort.by(Sort.Direction.DESC, "createdAt"));
+        }
+
         // Default filter for public view: only show OPEN offers unless a specific status is requested
         if (!filters.containsKey("status")) {
              User currentUser = null;
@@ -108,6 +116,13 @@ public class InternshipOfferService {
     public Page<InternshipOfferResponse> getOffersForCurrentCompany(Pageable pageable) {
         Company currentCompany = companyService.getCurrentUserCompany();
         log.debug("Fetching offers for company ID: {}", currentCompany.getId());
+        
+        // Apply default sorting if no sort is specified
+        if (pageable.getSort().isUnsorted()) {
+            pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), 
+                Sort.by(Sort.Direction.DESC, "createdAt"));
+        }
+        
         Page<InternshipOffer> offerPage = internshipOfferRepository.findByCompany(currentCompany, pageable);
         return offerPage.map(InternshipOfferResponse::fromEntity);
     }

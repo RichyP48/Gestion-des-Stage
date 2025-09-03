@@ -32,7 +32,7 @@ public class NotificationController {
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getNotificationsForCurrentUser(
-            @PageableDefault(size = 15, sort = "createdAt,desc") Pageable pageable) {
+            @PageableDefault(size = 15) Pageable pageable) {
         log.info("Received request to get notifications for current user");
         try {
             Page<NotificationResponse> responsePage = notificationService.getNotificationsForCurrentUser(pageable);

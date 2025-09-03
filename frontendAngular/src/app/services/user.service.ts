@@ -82,4 +82,13 @@ export class UserService {
   deleteUser(userId: number): Observable<void> {
     return this.apiService.delete<void>(`/admin/users/${userId}`);
   }
+
+  /**
+   * Get students for faculty
+   * @param page Page number
+   * @param size Page size
+   */
+  getStudentsForFaculty(page = 0, size = 20): Observable<any> {
+    return this.apiService.get<any>(`/faculty/students?page=${page}&size=${size}`);
+  }
 }

@@ -24,6 +24,14 @@ export class CompanyService {
     return this.apiService.put<Company>('/companies/me', companyData);
   }
 
+  /**
+   * Alias for updateCompany - used by backend service
+   * @param companyData Updated company data
+   */
+  updateCurrentCompany(companyData: CompanyUpdateRequest): Observable<Company> {
+    return this.updateCompany(companyData);
+  }
+
   // Admin-only methods
 
   /**

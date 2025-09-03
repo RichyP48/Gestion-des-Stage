@@ -1,9 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { InternshipService } from '../../../../services/internship.service';
-import { StatsService } from '../../../../services/stats.service';
+import { ApplicationService } from '../../../../services/application.service';
+import { OfferService } from '../../../../services/offer.service';
+import { AgreementService } from '../../../../services/agreement.service';
 import { AuthService } from '../../../../services/auth.service';
+import { forkJoin } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-student-dashboard',
@@ -92,28 +96,63 @@ export class StudentDashboardComponent implements OnInit {
   };
 
   constructor(
-    private internshipService: InternshipService,
-    private statsService: StatsService,
+    private applicationService: ApplicationService,
+    private offerService: OfferService,
+    private agreementService: AgreementService,
     private authService: AuthService
-  ) {}
+  ) {
+    console.log('📊 StudentDashboardComponent initialized');
+  }
 
   ngOnInit() {
     this.loadStats();
   }
 
   private loadStats() {
-    this.loadFallbackStats();
-  }
+    console.log('📈 Loading dashboard statistics...');
+    
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) {
+      console.error('❌ No authenticated user found');
+      return;
+    }
 
-  private loadFallbackStats() {
-    this.internshipService.getApplicationsByStudent().subscribe({
-      next: (applications: any) => this.stats.applications = applications.length,
-      error: (error: any) => console.error('Erreur lors du chargement des candidatures:', error)
-    });
+    console.log('👤 Current user:', currentUser);
 
-    this.internshipService.getAllOffers().subscribe({
-      next: (offers: any) => this.stats.offers = offers.filter((o: any) => o.statut === 'ACTIVE').length,
-      error: (error: any) => console.error('Erreur lors du chargement des offres:', error)
+    // Load all stats in parallel
+    forkJoin({
+      applications: this.applicationService.getStudentApplications(0, 100).pipe(
+        catchError(error => {
+          console.error('❌ Error loading applications:', error);
+          return of({ content: [], totalElements: 0 });
+        })
+      ),
+      offers: this.offerService.getOffers(0, 100).pipe(
+        catchError(error => {
+          console.error('❌ Error loading offers:', error);
+          return of({ content: [], totalElements: 0 });
+        })
+      ),
+      agreements: this.agreementService.getStudentAgreements(0, 100).pipe(
+        catchError(error => {
+          console.error('❌ Error loading agreements:', error);
+          return of({ content: [], totalElements: 0 });
+        })
+      )
+    }).subscribe({
+      next: (results) => {
+        console.log('✅ Dashboard stats loaded:', results);
+        
+        this.stats.applications = results.applications.totalElements || results.applications.content?.length || 0;
+        this.stats.offers = results.offers.totalElements || results.offers.content?.length || 0;
+        this.stats.agreements = results.agreements.totalElements || results.agreements.content?.length || 0;
+        
+        console.log('📊 Updated stats:', this.stats);
+      },
+      error: (error) => {
+        console.error('❌ Error loading dashboard stats:', error);
+        // Keep default values
+      }
     });
   }
 }

@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { tap, catchError } from 'rxjs/operators';
+import { throwError } from 'rxjs';
 import { environment } from '../environments/environment';
 
 @Injectable({
@@ -9,36 +11,106 @@ import { environment } from '../environments/environment';
 export class ApiService {
   private apiUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    console.log('🔧 ApiService initialized');
+    console.log('🌐 Backend URL:', this.apiUrl);
+    this.testConnection();
+  }
+
+  private testConnection(): void {
+    console.log('🔍 Testing backend connection...');
+    this.http.get(`${this.apiUrl}/health`).pipe(
+      tap(() => console.log('✅ Backend connection successful')),
+      catchError(error => {
+        console.error('❌ Backend connection failed:', error);
+        console.log('🔧 Trying alternative health check...');
+        return this.http.get(`${this.apiUrl}/actuator/health`).pipe(
+          tap(() => console.log('✅ Alternative health check successful')),
+          catchError(altError => {
+            console.error('❌ All health checks failed:', altError);
+            return throwError(() => altError);
+          })
+        );
+      })
+    ).subscribe();
+  }
    get<T>(path: string, params: HttpParams = new HttpParams(), responseType?: string): Observable<T> {
+    const fullUrl = `${this.apiUrl}${path}`;
+    console.log(`📡 GET Request: ${fullUrl}`, params.toString() ? { params: params.toString() } : '');
+    
     if (responseType === 'blob') {
       return this.http.get(`${this.apiUrl}${path}`, { 
         params, 
         responseType: 'blob',
         observe: 'body'
-      }) as unknown as Observable<T>;
+      }).pipe(
+        tap(() => console.log(`✅ GET Success (blob): ${fullUrl}`)),
+        catchError(error => {
+          console.error(`❌ GET Error: ${fullUrl}`, error);
+          return throwError(() => error);
+        })
+      ) as unknown as Observable<T>;
     }
     
-    return this.http.get<T>(`${this.apiUrl}${path}`, { params });
+    return this.http.get<T>(`${this.apiUrl}${path}`, { params }).pipe(
+      tap(response => console.log(`✅ GET Success: ${fullUrl}`, response)),
+      catchError(error => {
+        console.error(`❌ GET Error: ${fullUrl}`, error);
+        return throwError(() => error);
+      })
+    );
   }
 
   post<T>(path: string, body: any = {}, responseType?: string): Observable<T> {
+    const fullUrl = `${this.apiUrl}${path}`;
+    console.log(`📡 POST Request: ${fullUrl}`, body);
+    
     if (responseType === 'blob') {
       return this.http.post(`${this.apiUrl}${path}`, body, {
         responseType: 'blob',
         observe: 'body'
-      }) as unknown as Observable<T>;
+      }).pipe(
+        tap(() => console.log(`✅ POST Success (blob): ${fullUrl}`)),
+        catchError(error => {
+          console.error(`❌ POST Error: ${fullUrl}`, error);
+          return throwError(() => error);
+        })
+      ) as unknown as Observable<T>;
     }
     
-    return this.http.post<T>(`${this.apiUrl}${path}`, body);
+    return this.http.post<T>(`${this.apiUrl}${path}`, body).pipe(
+      tap(response => console.log(`✅ POST Success: ${fullUrl}`, response)),
+      catchError(error => {
+        console.error(`❌ POST Error: ${fullUrl}`, error);
+        return throwError(() => error);
+      })
+    );
   }
 
   put<T>(path: string, body: any = {}): Observable<T> {
-    return this.http.put<T>(`${this.apiUrl}${path}`, body);
+    const fullUrl = `${this.apiUrl}${path}`;
+    console.log(`📡 PUT Request: ${fullUrl}`, body);
+    
+    return this.http.put<T>(`${this.apiUrl}${path}`, body).pipe(
+      tap(response => console.log(`✅ PUT Success: ${fullUrl}`, response)),
+      catchError(error => {
+        console.error(`❌ PUT Error: ${fullUrl}`, error);
+        return throwError(() => error);
+      })
+    );
   }
 
   delete<T>(path: string): Observable<T> {
-    return this.http.delete<T>(`${this.apiUrl}${path}`);
+    const fullUrl = `${this.apiUrl}${path}`;
+    console.log(`📡 DELETE Request: ${fullUrl}`);
+    
+    return this.http.delete<T>(`${this.apiUrl}${path}`).pipe(
+      tap(response => console.log(`✅ DELETE Success: ${fullUrl}`, response)),
+      catchError(error => {
+        console.error(`❌ DELETE Error: ${fullUrl}`, error);
+        return throwError(() => error);
+      })
+    );
   }
 
   patch<T>(path: string, body: any = {}): Observable<T> {

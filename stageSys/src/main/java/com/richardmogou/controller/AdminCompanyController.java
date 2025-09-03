@@ -31,7 +31,7 @@ public class AdminCompanyController {
      */
     @GetMapping
     public ResponseEntity<Page<CompanyResponse>> getAllCompanies(
-            @PageableDefault(size = 20, sort = "name,asc") Pageable pageable) {
+            @PageableDefault(size = 20) Pageable pageable) {
         log.info("Admin request to list all companies");
         Page<CompanyResponse> companyPage = adminCompanyService.getAllCompanies(pageable);
         return ResponseEntity.ok(companyPage);

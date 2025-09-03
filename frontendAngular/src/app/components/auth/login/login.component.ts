@@ -1,7 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AuthService } from '../../../services/auth.service';
+import { LoginRequest } from '../../../models/user.model';
+import { DomMonitorService } from '../../../services/dom-monitor.service';
 
 @Component({
   selector: 'app-login',
@@ -97,36 +100,90 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
   `,
   styles: ``
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   loginForm: FormGroup;
   isLoading = false;
   errorMessage = '';
 
-  constructor(private fb: FormBuilder, private router: Router) {
+  constructor(
+    private fb: FormBuilder, 
+    private router: Router,
+    private authService: AuthService,
+    private domMonitor: DomMonitorService
+  ) {
+    console.log('🔑 LoginComponent constructor');
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required]]
     });
+    
+    // Log form creation
+    console.log('📝 Login form created with validators');
+  }
+
+  ngOnInit(): void {
+    console.log('✅ LoginComponent initialized');
+    this.domMonitor.logComponentLoad('LoginComponent');
+    
+    // Monitor form changes
+    this.loginForm.valueChanges.subscribe(values => {
+      console.log('📝 Form values changed:', {
+        email: values.email,
+        hasPassword: !!values.password,
+        formValid: this.loginForm.valid
+      });
+    });
   }
 
   onSubmit() {
+    console.log('📤 Login form submitted');
+    console.log('🔍 Form validation status:', {
+      valid: this.loginForm.valid,
+      errors: this.loginForm.errors,
+      emailErrors: this.loginForm.get('email')?.errors,
+      passwordErrors: this.loginForm.get('password')?.errors
+    });
+    
     if (this.loginForm.valid) {
       this.isLoading = true;
-      setTimeout(() => {
-        this.isLoading = false;
-        console.log('Login:', this.loginForm.value);
-        // Redirection selon le rôle (simulation)
-        const email = this.loginForm.value.email;
-        if (email.includes('student')) {
-          this.router.navigate(['/student/dashboard']);
-        } else if (email.includes('company')) {
-          this.router.navigate(['/company/dashboard']);
-        } else if (email.includes('faculty')) {
-          this.router.navigate(['/faculty/dashboard']);
-        } else {
-          this.router.navigate(['/admin/dashboard']);
+      this.errorMessage = '';
+      
+      const credentials: LoginRequest = this.loginForm.value;
+      console.log('🚀 Starting login process for:', credentials.email);
+      
+      this.authService.login(credentials).subscribe({
+        next: (response) => {
+          console.log('✅ Login successful, redirecting based on role:', response.role);
+          this.isLoading = false;
+          
+          // Redirection selon le rôle
+          let redirectUrl = '/home';
+          switch (response.role) {
+            case 'STUDENT':
+              redirectUrl = '/student/dashboard';
+              break;
+            case 'COMPANY':
+              redirectUrl = '/company/dashboard';
+              break;
+            case 'FACULTY':
+              redirectUrl = '/faculty/dashboard';
+              break;
+            case 'ADMIN':
+              redirectUrl = '/admin/dashboard';
+              break;
+          }
+          
+          console.log('🧧 Navigating to:', redirectUrl);
+          this.router.navigate([redirectUrl]);
+        },
+        error: (error) => {
+          console.error('❌ Login failed:', error);
+          this.isLoading = false;
+          this.errorMessage = error.message || 'Erreur de connexion';
         }
-      }, 2000);
+      });
+    } else {
+      console.log('❌ Form is invalid, cannot submit');
     }
   }
 }

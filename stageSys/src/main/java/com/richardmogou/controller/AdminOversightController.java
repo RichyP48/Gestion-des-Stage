@@ -31,7 +31,7 @@ public class AdminOversightController {
      */
     @GetMapping("/applications")
     public ResponseEntity<Page<ApplicationResponse>> getAllApplications(
-            @PageableDefault(size = 20, sort = "applicationDate,desc") Pageable pageable) {
+            @PageableDefault(size = 20) Pageable pageable) {
         log.info("Admin request to list all applications");
         Page<ApplicationResponse> applicationPage = applicationService.getAllApplications(pageable);
         return ResponseEntity.ok(applicationPage);
@@ -42,7 +42,7 @@ public class AdminOversightController {
      */
     @GetMapping("/agreements")
     public ResponseEntity<Page<InternshipAgreementResponse>> getAllAgreements(
-            @PageableDefault(size = 20, sort = "createdAt,desc") Pageable pageable) {
+            @PageableDefault(size = 20) Pageable pageable) {
         log.info("Admin request to list all agreements");
         Page<InternshipAgreementResponse> agreementPage = agreementService.getAllAgreements(pageable);
         return ResponseEntity.ok(agreementPage);

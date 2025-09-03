@@ -2,6 +2,8 @@ import { Routes } from '@angular/router';
 import { HomePageComponent } from './components/home/home-page/home-page.component';
 import { MainLayoutComponent } from './core/layout/main-layout/main-layout.component';
 import { DashboardLayoutComponent } from './core/layout/dashboard-layout/dashboard-layout.component';
+import { AuthGuard } from './guards/auth.guard';
+import { UserRole } from './models/user.model';
 
 export const routes: Routes = [
   {
@@ -21,16 +23,21 @@ export const routes: Routes = [
   {
     path: 'student',
     component: DashboardLayoutComponent,
+    canActivate: [AuthGuard],
+    data: { roles: [UserRole.STUDENT] },
     children: [
       { path: 'dashboard', loadComponent: () => import('./components/student/pages/student-dashboard/student-dashboard.component').then(m => m.StudentDashboardComponent) },
       { path: 'applications', loadComponent: () => import('./components/student/pages/student-applications/student-applications.component').then(m => m.StudentApplicationsComponent) },
       { path: 'agreements', loadComponent: () => import('./components/student/pages/student-agreements/student-agreements.component').then(m => m.StudentAgreementsComponent) },
-      { path: 'apply/:id', loadComponent: () => import('./components/student/submit-application/submit-application.component').then(m => m.SubmitApplicationComponent) }
+      { path: 'apply/:id', loadComponent: () => import('./components/student/submit-application/submit-application.component').then(m => m.SubmitApplicationComponent) },
+      { path: 'test', loadComponent: () => import('./components/student/student-test.component').then(m => m.StudentTestComponent) }
     ]
   },
   {
     path: 'company',
     component: DashboardLayoutComponent,
+    canActivate: [AuthGuard],
+    data: { roles: [UserRole.COMPANY] },
     children: [
       { path: 'dashboard', loadComponent: () => import('./components/company/pages/company-dashboard/company-dashboard.component').then(m => m.CompanyDashboardComponent) },
       { path: 'offers', loadComponent: () => import('./components/company/company-offers/company-offers.component').then(m => m.CompanyOffersComponent) },
@@ -41,10 +48,12 @@ export const routes: Routes = [
   {
     path: 'faculty',
     component: DashboardLayoutComponent,
+    canActivate: [AuthGuard],
+    data: { roles: [UserRole.FACULTY] },
     children: [
       { path: 'dashboard', loadComponent: () => import('./components/faculty/pages/faculty-dashboard/faculty-dashboard.component').then(m => m.FacultyDashboardComponent) },
       { path: 'students', loadComponent: () => import('./components/faculty/faculty-students/faculty-students.component').then(m => m.FacultyStudentsComponent) },
-      { path: 'companies', loadComponent: () => import('./components/faculty/pages/faculty-dashboard/faculty-dashboard.component').then(m => m.FacultyDashboardComponent) },
+      { path: 'companies', loadComponent: () => import('./components/faculty/pages/faculty-companies/faculty-companies.component').then(m => m.FacultyCompaniesComponent) },
       { path: 'agreements', loadComponent: () => import('./components/faculty/pages/faculty-dashboard/faculty-dashboard.component').then(m => m.FacultyDashboardComponent) },
       { path: 'reports', loadComponent: () => import('./components/faculty/pages/faculty-dashboard/faculty-dashboard.component').then(m => m.FacultyDashboardComponent) }
     ]
@@ -52,6 +61,8 @@ export const routes: Routes = [
   {
     path: 'admin',
     component: DashboardLayoutComponent,
+    canActivate: [AuthGuard],
+    data: { roles: [UserRole.ADMIN] },
     children: [
       { path: 'dashboard', loadComponent: () => import('./components/admin/admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent) },
       { path: 'users', loadComponent: () => import('./components/admin/admin-users/admin-users.component').then(m => m.AdminUsersComponent) },
@@ -65,8 +76,13 @@ export const routes: Routes = [
     loadComponent: () => import('./test.component').then(m => m.TestComponent)
   },
   {
+    path: 'api-test',
+    loadComponent: () => import('./components/shared/api-test-page.component').then(m => m.ApiTestPageComponent)
+  },
+  {
     path: 'offers',
     component: DashboardLayoutComponent,
+    canActivate: [AuthGuard],
     children: [
       { path: '', loadComponent: () => import('./components/offers/offers-list.component').then(m => m.OffersListComponent) }
     ]
@@ -74,10 +90,15 @@ export const routes: Routes = [
   {
     path: 'profile', 
     component: DashboardLayoutComponent,
+    canActivate: [AuthGuard],
     children: [
       { path: '', loadComponent: () => import('./components/student/pages/student-profile/student-profile.component').then(m => m.StudentProfileComponent) }
     ]
   },
-  { path: '', redirectTo: '/home', pathMatch: 'full' },
+  {
+    path: 'unauthorized',
+    loadComponent: () => import('./core/unauthorized/unauthorized.component').then(m => m.UnauthorizedComponent)
+  },
+  { path: '', redirectTo: '/auth/login', pathMatch: 'full' },
   { path: '**', redirectTo: '/auth/login' }
 ];
