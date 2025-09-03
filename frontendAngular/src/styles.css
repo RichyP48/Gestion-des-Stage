@@ -28,3 +28,7 @@
 ::-webkit-scrollbar-thumb:hover {
   box-shadow: 0 0 15px rgba(50, 185, 169, 0.8);
 }
+html, body { height: 100%; }
+body { margin: 0; 
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background-color: #f3f4f6; /* Couleur de fond gris clair */}
