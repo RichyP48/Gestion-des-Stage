@@ -159,29 +159,7 @@ export class ApiConnectorService {
       )
     };
 
-    // Add role-specific data
-    if (currentUser.role === 'STUDENT') {
-      sessionData['applications'] = this.applicationService.getStudentApplications(0, 5).pipe(
-        catchError(() => of({ content: [] }))
-      );
-      sessionData['agreements'] = this.agreementService.getStudentAgreements(0, 5).pipe(
-        catchError(() => of({ content: [] }))
-      );
-    } else if (currentUser.role === 'COMPANY') {
-      sessionData['company'] = this.companyService.getCurrentCompany().pipe(
-        catchError(() => of({ error: 'Failed to load company data' }))
-      );
-      sessionData['offers'] = this.offerService.getCompanyOffers(0, 5).pipe(
-        catchError(() => of({ content: [] }))
-      );
-      sessionData['applications'] = this.applicationService.getCompanyApplications(0, 5).pipe(
-        catchError(() => of({ content: [] }))
-      );
-    } else if (currentUser.role === 'FACULTY') {
-      sessionData['pendingAgreements'] = this.agreementService.getPendingFacultyAgreements(0, 5).pipe(
-        catchError(() => of({ content: [] }))
-      );
-    }
+  
 
     return forkJoin(sessionData).pipe(
       tap(data => console.log('✅ User session initialized:', data))

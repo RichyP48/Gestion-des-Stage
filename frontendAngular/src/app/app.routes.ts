@@ -71,14 +71,7 @@ export const routes: Routes = [
       { path: 'reports', loadComponent: () => import('./components/admin/admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent) }
     ]
   },
-  {
-    path: 'test',
-    loadComponent: () => import('./test.component').then(m => m.TestComponent)
-  },
-  {
-    path: 'api-test',
-    loadComponent: () => import('./components/shared/api-test-page.component').then(m => m.ApiTestPageComponent)
-  },
+
   {
     path: 'offers',
     component: DashboardLayoutComponent,
@@ -99,6 +92,6 @@ export const routes: Routes = [
     path: 'unauthorized',
     loadComponent: () => import('./core/unauthorized/unauthorized.component').then(m => m.UnauthorizedComponent)
   },
-  { path: '', redirectTo: '/auth/login', pathMatch: 'full' },
-  { path: '**', redirectTo: '/auth/login' }
+  { path: '', redirectTo: 'home', pathMatch: 'full' },
+  { path: '**', redirectTo: 'home' }
 ];

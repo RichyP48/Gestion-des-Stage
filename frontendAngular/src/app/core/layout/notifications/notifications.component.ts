@@ -13,7 +13,7 @@ import { Notification, NotificationType} from '../../../models/notification.mode
   template: `
     <div class="relative">
       <!-- Notification Bell -->
-      <button (click)="toggleNotifications()" class="relative text-white focus:outline-none">
+      <button (click)="toggleNotifications()" class="relative z-[500] text-primary-300 focus:outline-none">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
         </svg>
@@ -32,15 +32,15 @@ import { Notification, NotificationType} from '../../../models/notification.mode
           <h3 class="font-medium text-gray-700">Notifications</h3>
           <button *ngIf="notifications.length > 0" 
                   (click)="markAllAsRead()" 
-                  class="text-xs text-blue-600 hover:text-blue-800">
+                  class="text-xs text-primary-600 hover:text-primary-800">
             Mark all as read
           </button>
         </div>
         
         <ng-container *ngIf="notifications.length > 0; else noNotifications">
           <div *ngFor="let notification of notifications" 
-               [ngClass]="{'bg-blue-50': notification.type === NotificationType.SYSTEM}"
-               class="border-b last:border-b-0">
+               [ngClass]="{'bg-primary-50': notification.type === NotificationType.SYSTEM}"
+               class="border-b last:border-b-0 border-primary-500">
             <div
                (click)="handleNotificationClick(notification)"
                class="block px-4 py-3 hover:bg-gray-50">

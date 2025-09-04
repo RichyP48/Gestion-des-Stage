@@ -15,20 +15,6 @@ export class AgreementService {
   constructor(private apiService: ApiService) {}
 
   /**
-   * Get agreements with pagination
-   * @param page Page number
-   * @param size Page size
-   */
-  getAgreements(page = 0, size = 10): Observable<any> {
-    const params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', 'createdAt,desc');
-    
-    return this.apiService.get<any>('/agreements', params);
-  }
-
-  /**
    * Get an agreement by ID
    * @param agreementId Agreement ID
    */
@@ -132,19 +118,5 @@ export class AgreementService {
    */
   declineAgreement(agreementId: number): Observable<InternshipAgreement> {
     return this.apiService.put<InternshipAgreement>(`/agreements/${agreementId}/decline`, {});
-  }
-
-  /**
-   * Get agreements for current student
-   * @param page Page number
-   * @param size Page size
-   */
-  getStudentAgreements(page = 0, size = 10): Observable<any> {
-    const params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', 'createdAt,desc');
-    
-    return this.apiService.get<any>('/students/me/agreements', params);
   }
 }

@@ -85,7 +85,7 @@ export class BackendService {
 
   // ===== AGREEMENTS =====
   getAgreements(page = 0, size = 10): Observable<any> {
-    return this.agreementService.getAgreements(page, size);
+    return this.agreementService.getAllAgreements(page, size);
   }
 
   getAgreementById(agreementId: number): Observable<any> {

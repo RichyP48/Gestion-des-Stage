@@ -13,7 +13,8 @@ import { DomMonitorService } from '../../../services/dom-monitor.service';
   template: `
     <div class="flex">
       <div class="h-screen flex flex-col items-center justify-center bg-gradient-to-r from-[#2dd4bf] to-[#1f2937] w-full">
-        <div class="w-full max-w-md p-8 space-y-6 bg-transparent rounded-lg shadow-md">
+        <div class="w-full max-w-md p-8 space-y-6 bg-transparent rounded-lg shadow-md"
+        style="backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); background-color: rgba(255, 255, 255, 0.1);">
           <h2 class="text-2xl font-bold text-center text-gray-900">
             Connexion
           </h2>

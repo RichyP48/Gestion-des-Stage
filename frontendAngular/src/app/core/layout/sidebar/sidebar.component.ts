@@ -1,6 +1,8 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthService } from '../../../services/auth.service';
+import { DashboardLayoutComponent } from '../dashboard-layout/dashboard-layout.component';
 
 
 export interface SidebarItem {
@@ -29,7 +31,7 @@ export interface SidebarToggleEvent {
       </div>
 
       <!-- Navigation -->
-      <nav class="mt-6">
+      <nav class="mt-10">
         <ul class="space-y-2 px-4">
           <li *ngFor="let item of menuItems; trackBy: trackByFn">
             <a [routerLink]="item.route" routerLinkActive="bg-orange-500 border-r-4 border-orange-300" class="flex items-center px-4 py-3 text-white hover:bg-primary-700 hover:text-orange-200 rounded-lg transition-colors duration-200 font-medium">
@@ -109,13 +111,13 @@ export interface SidebarToggleEvent {
                 <circle cx="12" cy="7" r="4"></circle>
               </svg>
             </button>
-            <button class="p-2 bg-red-600 hover:bg-red-700 text-white rounded" title="Déconnexion">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                <polyline points="16,17 21,12 16,7"></polyline>
-                <line x1="21" y1="12" x2="9" y2="12"></line>
-              </svg>
-            </button>
+             <button (click)="logout()" class="p-2 bg-red-600 hover:bg-red-700 text-white rounded" title="Déconnexion">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                  <polyline points="16,17 21,12 16,7"></polyline>
+                  <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+              </button>
           </div>
         </div>
       </div>
@@ -137,7 +139,19 @@ export class SidebarComponent implements OnInit{
 
   @Output() sidebarToggled = new EventEmitter<boolean>();
 
-
+ constructor(private authService: AuthService, private router: Router, loadUserDatal: DashboardLayoutComponent) {
+    console.log('📱 DashboardLayoutComponent initialized');
+    
+    // Vérifier si l'utilisateur est connecté
+    if (!this.authService.isLoggedIn()) {
+      console.log('❌ User not logged in, redirecting to login');
+      this.router.navigate(['/auth/login']);
+      return;
+    }
+    const loadBal=loadUserDatal.loadUserData();
+    
+  }
+  
   get userInitials(): string {
     return this.userName.split(' ').map(n => n[0]).join('').toUpperCase();
   }
@@ -148,7 +162,10 @@ export class SidebarComponent implements OnInit{
     this.isOpen = !this.isOpen;
     this.sidebarToggled.emit(this.isOpen);
   }
-
+   logout() {
+    this.authService.logout();
+    this.router.navigate(['/auth/login']);
+  }
   trackByFn(index: number, item: SidebarItem) {
     return item.route;
   }

@@ -10,7 +10,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
   template: `
     <div class="flex">
       <div class="h-screen flex flex-col items-center justify-center bg-gradient-to-r from-[#2dd4bf] to-[#1f2937] w-full overflow-y-auto">
-        <div class="w-full max-w-md p-8 space-y-6 bg-transparent rounded-lg shadow-md my-8">
+        <div class="w-full max-w-md p-8 space-y-6 bg-transparent rounded-lg shadow-md my-8"  style="backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); background-color: rgba(255, 255, 255, 0.1);">
           <h2 class="text-2xl font-bold text-center text-gray-900">
             Inscription
           </h2>

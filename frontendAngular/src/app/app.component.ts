@@ -5,12 +5,11 @@ import { DomMonitorService } from './services/dom-monitor.service';
 import { ApiConnectorService } from './services/api-connector.service';
 import { AppInitializerService } from './services/app-initializer.service';
 import { AuthService } from './services/auth.service';
-import { ApiStatusComponent } from './components/shared/api-status.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, CommonModule, ApiStatusComponent],
+  imports: [RouterOutlet, CommonModule],
   template: `
     <div class="min-h-screen bg-gray-50">
       <!-- Development API Status (only show in development) -->
@@ -38,7 +37,6 @@ import { ApiStatusComponent } from './components/shared/api-status.component';
           
           <!-- Detailed API Status -->
           <div *ngIf="showDetailedStatus" class="mt-2 p-3 bg-white rounded border">
-            <app-api-status></app-api-status>
           </div>
         </div>
       </div>
