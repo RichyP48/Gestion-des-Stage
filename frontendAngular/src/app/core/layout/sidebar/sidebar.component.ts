@@ -105,12 +105,7 @@ export interface SidebarToggleEvent {
             </div>
           </div>
           <div class="flex space-x-2">
-            <button class="p-2 bg-primary-800 hover:bg-primary-700 text-orange-400 hover:text-orange-300 rounded" title="Profil">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-            </button>
+            
              <button (click)="logout()" class="p-2 bg-red-600 hover:bg-red-700 text-white rounded" title="Déconnexion">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>

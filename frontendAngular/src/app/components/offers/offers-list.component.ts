@@ -12,7 +12,7 @@ import { HttpClient } from '@angular/common/http';
   imports: [CommonModule, RouterLink, FormsModule],
   template: `
     <div class="space-y-6">
-      <div class="bg-white rounded-lg shadow-sm border border-primary-200 p-6">
+      <div class="bg-white rounded-lg shadow-sm border  p-6">
         <h1 class="text-2xl font-bold text-primary-900">Offres de stage</h1>
         
         <!-- Filtres -->
@@ -37,31 +37,45 @@ import { HttpClient } from '@angular/common/http';
       
       <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <div *ngFor="let offer of filteredOffers" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div class="flex justify-between items-start mb-2">
-            <span [ngClass]="getStatusClass(offer.statut)" class="px-2 py-1 rounded-full text-xs">
+        <div class="flex justify-between items-start mb-2">
+      <span class="bg-orange-100 text-orange-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">{{ offer.domain }}</span>
+      <button class="text-gray-400 hover:text-red-500">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+        </svg>
+      </button>
+    </div>
+    <h3 class="text-xl mb-1 font-bold text-primary-900">{{ offer.title }}</h3>
+    <p class="text-gray-600">Entreprise: {{ offer.companyName }}</p>
+    <div class="space-y-3 my-4">
+         <p class="text-sm text-gray-700 mb-4 line-clamp-3">{{offer.description}}</p>
+      <div class="flex items-center text-sm text-gray-600">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        </svg>
+        {{ offer.location }}
+      </div>
+      <div class="flex items-center justify-between text-sm text-gray-600">
+        <div class="flex items-center mr-4">
+           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        Durée: {{ offer.duration }}
+        </div>
+       
+         <span [ngClass]="getStatusClass(offer.statut)" class="px-2 py-1 rounded-full text-xs">
               {{offer.statut}}
             </span>
-            <span class="text-sm text-gray-500">{{offer.duree}} mois</span>
-          </div>
-          
-          <h3 class="text-lg font-semibold text-primary-900 mb-2">{{offer.titre}}</h3>
-          <p class="text-sm text-gray-600 mb-2">{{offer.companyName}}</p>
-          <p class="text-sm text-gray-700 mb-4 line-clamp-3">{{offer.description}}</p>
-          
-          <div class="space-y-2 mb-4">
-            <div class="flex items-center text-sm text-gray-600">
-              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-              </svg>
-              {{offer.lieu}}
-            </div>
-            <div class="flex items-center text-sm text-gray-600">
+      </div>
+      <div class="flex items-center justify-end text-sm text-gray-600">
               <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
               </svg>
-              {{offer.salaire}}€/mois
+              {{offer.salaire}}FCFA/mois
             </div>
-          </div>
+    </div>  
+        
           
           <div class="flex space-x-2">
             <button (click)="viewDetails(offer)" 
@@ -98,6 +112,10 @@ import { HttpClient } from '@angular/common/http';
             <h4 class="font-medium text-gray-900">Entreprise</h4>
             <p class="text-gray-600">{{selectedOffer.companyName}}</p>
           </div>
+           <!-- <div>
+            <h4 class="font-medium text-gray-900">Domaine</h4>
+            <p class="text-gray-600">{{selectedOffer.domain}}</p>
+          </div> -->
           
           <div>
             <h4 class="font-medium text-gray-900">Description</h4>
@@ -175,6 +193,12 @@ import { HttpClient } from '@angular/common/http';
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
+    h1, h2, h3, h4{
+    font-family: 'Merriweather', serif;
+}
+p, a, li, span, div, input, button{
+    font-family: 'Poppins', sans-serif;
+}
   `
 })
 export class OffersListComponent implements OnInit {

@@ -39,7 +39,7 @@ export class BackendService {
 
   // ===== OFFERS =====
   getOffers(page = 0, size = 10, filters?: any): Observable<any> {
-    return this.offerService.getOffers(page, size, filters?.domain, filters?.location, filters?.duration, filters?.status, filters?.companyId, filters?.skill, filters?.search);
+    return this.offerService.getOffers(page, size, filters?.domain, filters?.location, filters?.duration, filters?.status, filters?.companyId, filters?.skill, filters?.search, filters.companyName);
   }
 
   getOfferById(id: number): Observable<any> {

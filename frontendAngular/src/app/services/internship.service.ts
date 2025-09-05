@@ -1,7 +1,21 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+interface InternshipOffer {
+  id?: number;
+  title: string;
+  domain: string;
+  description: string;
+  location: string;
+  duration: string;
+  startDate: string;
+  salary: number;
+  requiredSkills: string;
+  companyId: number;
+  companyName: string;
+  status: 'ACTIVE' | 'INACTIVE' | 'EXPIRED';
+}
 @Injectable({
   providedIn: 'root'
 })
@@ -31,6 +45,14 @@ export class InternshipService {
   createOffer(offer: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/offers`, offer);
   }
+   getCompanyOffers(page = 0, size = 10): Observable<InternshipOffer[]> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', 'createdAt,desc');
+    
+    return this.http.get<InternshipOffer[]>(`${this.baseUrl}/companies/me/offers`, { params });
+  }
 
   getApplicationsByStudent(): Observable<any> {
     return this.http.get(`${this.baseUrl}/students/me/applications`);
@@ -44,5 +66,13 @@ export class InternshipService {
 
   signAgreement(agreementId: number, signature: any): Observable<any> {
     return this.http.put(`${this.baseUrl}/agreements/${agreementId}/validate`, signature);
+  }
+  updateOffer(offer: InternshipOffer): Observable<InternshipOffer> {
+    return this.http.put<InternshipOffer>(`${this.baseUrl}/offers/${offer.id}`, offer);
+  }
+
+  // Supprime une offre de stage par son ID
+  deleteOffer(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/offers/${id}`);
   }
 }

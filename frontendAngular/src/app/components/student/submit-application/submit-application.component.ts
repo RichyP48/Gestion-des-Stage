@@ -12,7 +12,7 @@ import { NotificationService } from '../../../services/notification.service';
   template: `
     <div class="max-w-4xl mx-auto space-y-6">
       <!-- Header -->
-      <div class="bg-white rounded-lg shadow-sm border border-primary-200 p-6">
+      <div class="bg-white rounded-lg shadow-sm border  p-6">
         <h1 class="text-2xl font-bold text-primary-900">Postuler à l'offre</h1>
         <div *ngIf="offer" class="mt-4 p-4 bg-gray-50 rounded-lg">
           <h3 class="font-semibold text-lg">{{offer.title}}</h3>
@@ -22,7 +22,7 @@ import { NotificationService } from '../../../services/notification.service';
       </div>
 
       <!-- Application Form -->
-      <div class="bg-white rounded-lg shadow-sm border border-primary-200 p-6">
+      <div class="bg-white rounded-lg shadow-sm border  p-6">
         <form (ngSubmit)="submitApplication()" #applicationForm="ngForm">
           <!-- Cover Letter -->
           <div class="mb-6">

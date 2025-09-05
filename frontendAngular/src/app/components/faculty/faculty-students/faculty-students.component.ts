@@ -11,13 +11,13 @@ import { of } from 'rxjs';
   imports: [CommonModule],
   template: `
     <div class="space-y-6">
-      <div class="bg-white rounded-lg shadow-sm border border-primary-200 p-6">
+      <div class="bg-white rounded-lg shadow-sm border  p-6">
         <h1 class="text-2xl font-bold text-primary-900 mb-2">Liste des Étudiants</h1>
         <p class="text-primary-600">{{students.length}} étudiants trouvés</p>
       </div>
 
       <!-- Loading -->
-      <div *ngIf="loading" class="bg-white rounded-lg shadow-sm border border-primary-200 p-8 text-center">
+      <div *ngIf="loading" class="bg-white rounded-lg shadow-sm border  p-8 text-center">
         <p>🔄 Chargement des étudiants...</p>
       </div>
 
@@ -30,7 +30,7 @@ import { of } from 'rxjs';
       </div>
 
       <!-- Students List -->
-      <div *ngIf="!loading && !error" class="bg-white rounded-lg shadow-sm border border-primary-200">
+      <div *ngIf="!loading && !error" class="bg-white rounded-lg shadow-sm border ">
         <div class="p-6 border-b border-gray-200">
           <h2 class="text-lg font-semibold text-primary-900">Étudiants ({{students.length}})</h2>
         </div>

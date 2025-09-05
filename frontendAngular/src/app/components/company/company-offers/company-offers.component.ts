@@ -10,11 +10,11 @@ import { NotificationService } from '../../../services/notification.service';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="space-y-6">
-      <div class="bg-white rounded-lg shadow-sm border border-primary-200 p-6">
+      <div class="bg-white rounded-lg shadow-sm border  p-6">
         <h1 class="text-2xl font-bold text-primary-900">Mes offres de stage</h1>
       </div>
       
-      <div class="bg-white rounded-lg shadow-sm border border-primary-200 p-6">
+      <div class="bg-white rounded-lg shadow-sm border  p-6">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-lg font-semibold text-primary-900">Liste des offres</h2>
           <button (click)="openAddOfferModal()" class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700">
@@ -40,11 +40,11 @@ import { NotificationService } from '../../../services/notification.service';
               <button class="text-primary-600 hover:text-primary-800 text-sm">
                 Voir candidatures
               </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
     <!-- Modal Créer Offre -->
     <div *ngIf="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -55,7 +55,12 @@ import { NotificationService } from '../../../services/notification.service';
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="md:col-span-2">
               <label class="block text-sm font-medium text-gray-700">Titre</label>
-              <input [(ngModel)]="currentOffer.titre" name="titre" required 
+              <input [(ngModel)]="currentOffer.title" name="titre" required 
+                     class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+            </div>
+             <div class="md:col-span-2">
+              <label class="block text-sm font-medium text-gray-700">Domaine</label>
+              <input [(ngModel)]="currentOffer.domain" name="titre" required 
                      class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
             </div>
             
@@ -67,19 +72,19 @@ import { NotificationService } from '../../../services/notification.service';
             
             <div>
               <label class="block text-sm font-medium text-gray-700">Lieu</label>
-              <input [(ngModel)]="currentOffer.lieu" name="lieu" required 
+              <input [(ngModel)]="currentOffer.location" name="lieu" required 
                      class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
-            </div>
+        </div>
             
             <div>
               <label class="block text-sm font-medium text-gray-700">Durée (mois)</label>
-              <input [(ngModel)]="currentOffer.duree" name="duree" type="number" required 
+              <input [(ngModel)]="currentOffer.duration" name="duree"  required 
                      class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
             </div>
             
             <div>
               <label class="block text-sm font-medium text-gray-700">Date de début</label>
-              <input [(ngModel)]="currentOffer.dateDebut" name="dateDebut" type="date" required 
+              <input [(ngModel)]="currentOffer.startDate" name="dateDebut" type="date" required 
                      class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
             </div>
             
@@ -91,7 +96,7 @@ import { NotificationService } from '../../../services/notification.service';
             
             <div class="md:col-span-2">
               <label class="block text-sm font-medium text-gray-700">Compétences requises</label>
-              <input [(ngModel)]="currentOffer.competencesRequises" name="competencesRequises" required 
+              <input [(ngModel)]="currentOffer.requiredSkills" name="competencesRequises" required 
                      class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
             </div>
           </div>
@@ -168,7 +173,7 @@ export class CompanyOffersComponent implements OnInit {
         this.notificationService.error('Erreur lors de la création de l\'offre');
       }
     });
-  }
+    }
 
   closeModal() {
     this.showModal = false;
@@ -186,14 +191,15 @@ export class CompanyOffersComponent implements OnInit {
 
   private getEmptyOffer(): any {
     return {
-      titre: '',
+      title: '',
       description: '',
-      competencesRequises: '',
-      duree: 6,
-      dateDebut: new Date(),
+      requiredSkills: '',
+      duration: '',
+      startDate: new Date(),
       dateFin: new Date(),
       salaire: 0,
-      lieu: '',
+      location: '',
+      domain: '',
       companyId: 0,
       statut: 'ACTIVE'
     };

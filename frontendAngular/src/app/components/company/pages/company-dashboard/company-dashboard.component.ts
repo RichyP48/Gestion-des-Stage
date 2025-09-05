@@ -8,13 +8,13 @@ import { RouterLink } from '@angular/router';
   imports: [CommonModule, RouterLink],
   template: `
     <div class="space-y-6">
-      <div class="bg-white rounded-lg shadow-sm border border-primary-200 p-6">
+      <div class="bg-white rounded-lg shadow-sm border  p-6">
         <h1 class="text-2xl font-bold text-primary-900 mb-2">Tableau de bord entreprise</h1>
         <p class="text-primary-600">Gérez vos offres et candidatures</p>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div class="bg-white rounded-lg shadow-sm border border-primary-200 p-6">
+        <div class="bg-white rounded-lg shadow-sm border  p-6">
           <div class="flex items-center">
             <div class="p-3 bg-primary-100 rounded-lg">
               <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -28,7 +28,7 @@ import { RouterLink } from '@angular/router';
           </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-sm border border-primary-200 p-6">
+        <div class="bg-white rounded-lg shadow-sm border  p-6">
           <div class="flex items-center">
             <div class="p-3 bg-orange-100 rounded-lg">
               <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -44,7 +44,7 @@ import { RouterLink } from '@angular/router';
           </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-sm border border-primary-200 p-6">
+        <div class="bg-white rounded-lg shadow-sm border  p-6">
           <div class="flex items-center">
             <div class="p-3 bg-green-100 rounded-lg">
               <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -58,7 +58,7 @@ import { RouterLink } from '@angular/router';
           </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-sm border border-primary-200 p-6">
+        <div class="bg-white rounded-lg shadow-sm border  p-6">
           <div class="flex items-center">
             <div class="p-3 bg-blue-100 rounded-lg">
               <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -73,7 +73,7 @@ import { RouterLink } from '@angular/router';
         </div>
       </div>
 
-      <div class="bg-white rounded-lg shadow-sm border border-primary-200 p-6">
+      <div class="bg-white rounded-lg shadow-sm border  p-6">
         <h2 class="text-lg font-semibold text-primary-900 mb-4">Actions rapides</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <a routerLink="/company/offers" class="flex items-center p-4 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors">

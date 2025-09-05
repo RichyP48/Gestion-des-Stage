@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-navbar',
@@ -27,7 +28,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
               À propos
             </a>
           </nav>
-          <div class="flex items-center space-x-4">
+          <div class="flex items-center space-x-4"*ngIf="!isLoggedIn">
             <a routerLink="/auth/register">
               <button class="border-2 border-primary-900 text-primary-900 hover:bg-primary-100 px-4 py-2 rounded-md">
                 S'inscrire
@@ -39,6 +40,10 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
               </button>
             </a>
           </div>
+          <div *ngIf="isLoggedIn">
+            <button (click)="logout()" class="bg-orange-500 text-white hover:bg-orange-600 px-4 py-2 rounded-md">
+            Déconnexion
+            </button></div>
         </div>
       </div>
     </header>
@@ -46,4 +51,27 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
   styles: ``
 })
 export class NavbarComponent {
+  loading: boolean = false;
+  userRole: string | null = null;
+
+ get isLoggedIn(): boolean {
+  try{
+    return this.authService.isLoggedIn();
+  }catch(error){
+    console.error('Error checking login status:', error);
+    return false;
+  }
+ }
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['']);
+  }
+  constructor(private authService: AuthService,
+     private router: Router,
+    private route : ActivatedRoute) {
+      if(this.authService.isLoggedIn()){
+        this.userRole=this.authService.getCurrentUserRole();
+        console.log('Role utilisateur:', this.userRole);
+      }
+    }
 }

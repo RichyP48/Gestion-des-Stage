@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { OfferService } from '../../../../services/offer.service';
 import { ApplicationService } from '../../../../services/application.service';
 import { InternshipOffer } from '../../../../models/offer.model';
+import { NotificationService } from '../../../../services/notification.service';
 
 @Component({
   selector: 'app-offer-apply',
@@ -230,7 +231,8 @@ export class OfferApplyComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private offerService: OfferService,
-    private applicationService: ApplicationService
+    private applicationService: ApplicationService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -295,12 +297,12 @@ export class OfferApplyComponent implements OnInit {
         return;
       }
       
-      // Check file size (5MB max)
-      if (file.size > 5 * 1024 * 1024) {
-        this.fileError = 'File is too large. Maximum size is 5MB.';
-        this.file = null;
-        return;
-      }
+     const maxSizeInMB=5;
+     const maxSizeInBytes=maxSizeInMB*1024*1024;
+     if(file.size>maxSizeInBytes){
+      this.notificationService.error(`File size exceeds the ${maxSizeInMB}MB limit. Please upload a smaller file.`);
+    return; 
+    }
       
       this.file = file;
     }
@@ -309,10 +311,10 @@ export class OfferApplyComponent implements OnInit {
   onSubmit(): void {
     this.resumeRequired = true;
     if (this.applicationForm.invalid || !this.file) {
-      // Mark all fields as touched to display validation errors
       Object.keys(this.applicationForm.controls).forEach(key => {
         this.applicationForm.get(key)?.markAsTouched();
       });
+      this.fileError=!this.file ? 'Resume/CV is required' : '';
       return;
     }
     

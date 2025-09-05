@@ -7,12 +7,12 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   template: `
     <div class="space-y-6">
-      <div class="bg-white rounded-lg shadow-sm border border-primary-200 p-6">
+      <div class="bg-white rounded-lg shadow-sm border  p-6">
         <h1 class="text-2xl font-bold text-primary-900">Paramètres système</h1>
       </div>
       
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="bg-white rounded-lg shadow-sm border border-primary-200 p-6">
+        <div class="bg-white rounded-lg shadow-sm border  p-6">
           <h2 class="text-lg font-semibold text-primary-900 mb-4">Configuration générale</h2>
           <div class="space-y-4">
             <div class="flex items-center justify-between">
@@ -30,7 +30,7 @@ import { CommonModule } from '@angular/common';
           </div>
         </div>
         
-        <div class="bg-white rounded-lg shadow-sm border border-primary-200 p-6">
+        <div class="bg-white rounded-lg shadow-sm border  p-6">
           <h2 class="text-lg font-semibold text-primary-900 mb-4">Statistiques</h2>
           <div class="space-y-3">
             <div class="flex justify-between">

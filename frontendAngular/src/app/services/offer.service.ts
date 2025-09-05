@@ -23,7 +23,8 @@ export class OfferService {
     status?: string,
     companyId?: number,
     skill?: string,
-    search?: string
+    search?: string,
+    companyName?: string
   ): Observable<any> {
     let params = new HttpParams()
       .set('page', page.toString())
@@ -37,6 +38,7 @@ export class OfferService {
     if (companyId) params = params.set('companyId', companyId.toString());
     if (skill) params = params.set('skill', skill);
     if (search) params = params.set('search', search);
+    if (companyName) params= params.set('companyName', companyName)
     
     return this.apiService.get<any>('/offers', params);
   }

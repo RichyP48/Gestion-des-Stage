@@ -13,12 +13,12 @@ import { of } from 'rxjs';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="space-y-6">
-      <div class="bg-white rounded-lg shadow-sm border border-primary-200 p-6">
+      <div class="bg-white rounded-lg shadow-sm border  p-6">
         <h1 class="text-2xl font-bold text-primary-900">Mon profil</h1>
       </div>
       
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="bg-white rounded-lg shadow-sm border border-primary-200 p-6">
+        <div class="bg-white rounded-lg shadow-sm border  p-6">
           <div class="text-center">
             <div class="w-32 h-32 bg-primary-600 rounded-full flex items-center justify-center mx-auto mb-4">
               <span class="text-3xl font-bold text-white">{{userInitials}}</span>
@@ -28,7 +28,7 @@ import { of } from 'rxjs';
           </div>
         </div>
         
-        <div class="lg:col-span-2 bg-white rounded-lg shadow-sm border border-primary-200 p-6">
+        <div class="lg:col-span-2 bg-white rounded-lg shadow-sm border  p-6">
           <h2 class="text-lg font-semibold text-primary-900 mb-4">Informations personnelles</h2>
           
           <form (ngSubmit)="saveProfile()" #profileForm="ngForm">

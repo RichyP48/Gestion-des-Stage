@@ -31,7 +31,7 @@ enum UserRole{
       
       <div class="flex-1 transition-all duration-300 md:ml-64" [ngClass]="{'ml-0': !sidebarOpen}">
         <!-- Top bar -->
-        <header class="bg-white shadow-sm border-b border-primary-200">
+        <header class="bg-white shadow-sm border-b ">
           <div class="flex items-center justify-between px-6 py-4">
             <button (click)="toggleSidebar()" class="md:hidden text-primary-600 hover:text-primary-800">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

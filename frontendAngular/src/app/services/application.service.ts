@@ -88,6 +88,7 @@ export class ApplicationService {
    * @param applicationId Application ID
    */
   downloadCV(applicationId: number): Observable<Blob> {
-    return this.apiService.get<Blob>(`/applications/${applicationId}/cv`, new HttpParams(), 'blob');
+    return this.apiService.get<Blob>(`/applications/${applicationId}/cv`,
+       new HttpParams(), 'blob');
   }
 }
