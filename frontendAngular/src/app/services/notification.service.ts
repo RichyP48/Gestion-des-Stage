@@ -101,5 +101,29 @@ clear(): void {
     // Implémentez la logique pour afficher une notification d'erreur
     console.error('Error:', message);
   }
+  showSuccess(message: string) {
+    this.show(message, 'success')
+  }
+
+  showError(message: string) {
+    this.show(message, 'error')
+  }
+
+  private show(message: string, type: 'success' | 'error') {
+    const toast = document.createElement('div')
+
+    toast.textContent = message
+    toast.className = `
+      fixed bottom-5 right-5 z-50 px-4 py-3 rounded shadow-lg text-white
+      ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}
+      animate-slide-in
+    `
+    document.body.appendChild(toast)
+
+    setTimeout(() => {
+      toast.classList.add('opacity-0')
+      setTimeout(() => document.body.removeChild(toast), 300)
+    }, 3000)
+  }
 
 }

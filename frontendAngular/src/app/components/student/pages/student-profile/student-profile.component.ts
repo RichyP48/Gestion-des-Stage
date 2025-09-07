@@ -112,7 +112,7 @@ export class StudentProfileComponent implements OnInit {
           lastName: currentUser.lastName || '',
           email: currentUser.email || '',
           role: currentUser.role,
-          telephone: '',
+          phoneNumber: '',
           enabled: true,
           createdAt: '',
           updatedAt: ''
@@ -126,7 +126,7 @@ export class StudentProfileComponent implements OnInit {
           nom: user.lastName || '',
           prenom: user.firstName || '',
           email: user.email || '',
-          telephone: user.telephone || '',
+          telephone: user.phoneNumber || '',
           role: user.role
         };
         console.log('📝 Profile data mapped:', this.profile);
@@ -150,7 +150,7 @@ export class StudentProfileComponent implements OnInit {
       firstName: this.profile.prenom,
       lastName: this.profile.nom,
       email: this.profile.email,
-      telephone: this.profile.telephone
+      telephone: this.profile.phoneNumber
     };
 
     console.log('📤 Sending update data:', updateData);
@@ -173,7 +173,7 @@ export class StudentProfileComponent implements OnInit {
             nom: updatedUser.lastName || '',
             prenom: updatedUser.firstName || '',
             email: updatedUser.email || '',
-            telephone: updatedUser.telephone || '',
+            telephone: updatedUser.phoneNumber || '',
             role: updatedUser.role
           };
           

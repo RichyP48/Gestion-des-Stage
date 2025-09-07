@@ -10,6 +10,15 @@ module.exports = {
         sans: 'Poppins, sans-serif',
         heading: 'Merriweather, serif',
       },
+       animation: {
+        'slide-in': 'slideIn 0.3s ease-out',
+      },
+      keyframes: {
+        slideIn: {
+          '0%': { transform: 'translateY(100%)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+      },
       colors:{
         'dark':"#212529",
         'light':"#f0f3fb",

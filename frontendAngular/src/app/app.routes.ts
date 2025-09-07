@@ -66,9 +66,9 @@ export const routes: Routes = [
     children: [
       { path: 'dashboard', loadComponent: () => import('./components/admin/admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent) },
       { path: 'users', loadComponent: () => import('./components/admin/admin-users/admin-users.component').then(m => m.AdminUsersComponent) },
-      { path: 'companies', loadComponent: () => import('./components/admin/admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent) },
+      { path: 'companies', loadComponent: () => import('./components/admin/admin-company/admin-company.component').then(m => m.AdminCompanyComponent) },
       { path: 'settings', loadComponent: () => import('./components/admin/admin-setting/admin-setting.component').then(m => m.AdminSettingComponent) },
-      { path: 'reports', loadComponent: () => import('./components/admin/admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent) }
+      { path: 'reports', loadComponent: () => import('./components/admin/admin-reports/admin-reports.component').then(m => m.AdminReportsComponent) }
     ]
   },
 

@@ -38,8 +38,4 @@ export class StatsService {
   getOffersStats(): Observable<any> {
     return this.http.get(`${this.apiUrl}/offers`);
   }
-
-  getAgreementsStats(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/agreements`);
-  }
 }

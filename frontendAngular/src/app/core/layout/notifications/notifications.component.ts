@@ -157,6 +157,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
         return 'Notification';
     }
   }
+  
 
 
 }

@@ -9,6 +9,12 @@ export interface Company {
   primaryContactUserEmail: string;
   createdAt: string;
   updatedAt: string;
+   status: 'ACTIVE' | 'PENDING' | 'SUSPENDED';
+  //   siret: string;
+  // contactEmail: string;
+  // phone: string;
+  // industry: string;
+  activeOffers: number;
 }
 
 export interface CompanyUpdateRequest {

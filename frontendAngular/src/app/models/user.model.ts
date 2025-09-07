@@ -15,12 +15,8 @@ export interface User {
   createdAt: string;
   updatedAt: string;
   phoneNumber?: string;
-  // Aliases pour compatibilité
-  name?: string;
-  prenom?: string;
-  nom?: string;
-  telephone?: string;
-  actif?: boolean;
+
+
 }
 
 export interface AuthResponse {

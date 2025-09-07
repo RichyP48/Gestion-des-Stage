@@ -13,7 +13,15 @@
         </div>
       </div>
     </div>
-    <div class="absolute inset-0 bg-gradient-to-br from-primary-900 via-primary-700 to-teal-600 opacity-90">
+    <div
+      x-data="{ show: false }"
+  x-init="setTimeout(() => show = true, 100)"
+  :class="show ? 'opacity-90' : 'opacity-0'"
+     class="absolute inset-0 bg-gradient-to-br from-primary-900 via-primary-700 to-teal-600 opacity-100 transition-opacity duration-1000 hover:opacity-50">
+      <!-- Contenu -->
+
+
+    <!-- <div class="absolute inset-0 bg-gradient-to-br from-primary-900 via-primary-700 to-teal-600 opacity-90"> -->
       <!-- <div class="absolute inset-0 bg-black bg-opacity-30"></div> -->
     </div>
     <div class="relative z-10 text-center text-white max-w-4xl mx-auto px-4">

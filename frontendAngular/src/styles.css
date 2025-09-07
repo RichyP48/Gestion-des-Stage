@@ -30,5 +30,11 @@
 }
 html, body { height: 100%; }
 body { margin: 0; 
-  font-family: Roboto, "Helvetica Neue", sans-serif;
-  background-color: #f3f4f6; /* Couleur de fond gris clair */}
+  font-family: 'Poppins', sans-serif;
+  }
+  h1, h2, h3, h4{
+    font-family: 'Merriweather', serif;
+}
+p, a, li, span, div, input, button{
+    font-family: 'Poppins', sans-serif;
+}

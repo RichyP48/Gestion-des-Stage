@@ -217,6 +217,43 @@ export class ApiService {
     return this.http.delete(`${this.apiUrl}/admin/companies/${companyId}`);
   }
 
+  // ===== ADMIN REPORTS =====
+  getAdminReports(period: string = 'month'): Observable<any> {
+    const params = new HttpParams().set('period', period);
+    return this.http.get(`${this.apiUrl}/admin/reports`, { params });
+  }
+
+  exportAdminReport(period: string = 'month'): Observable<Blob> {
+    const params = new HttpParams().set('period', period);
+    return this.http.get(`${this.apiUrl}/admin/reports/export`, { 
+      params, 
+      responseType: 'blob' 
+    });
+  }
+
+  getAdminSystemStats(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/admin/stats/system`);
+  }
+
+  getAdminUserActivity(period: string = 'month'): Observable<any> {
+    const params = new HttpParams().set('period', period);
+    return this.http.get(`${this.apiUrl}/admin/stats/activity`, { params });
+  }
+
+  getAdminPlatformUsage(months: number = 6): Observable<any> {
+    const params = new HttpParams().set('months', months.toString());
+    return this.http.get(`${this.apiUrl}/admin/stats/usage`, { params });
+  }
+
+  getAdminTopCompanies(limit: number = 5): Observable<any> {
+    const params = new HttpParams().set('limit', limit.toString());
+    return this.http.get(`${this.apiUrl}/admin/stats/companies/top`, { params });
+  }
+
+  getAdminSystemHealth(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/admin/stats/health`);
+  }
+
   // ===== SUPPORTING RESOURCES =====
   getAllSkills(): Observable<any> {
     return this.http.get(`${this.apiUrl}/skills`);
