@@ -11,7 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,6 +67,13 @@ public class NotificationService {
     public Page<NotificationResponse> getNotificationsForCurrentUser(Pageable pageable) {
         User currentUser = userService.getCurrentUser();
         log.debug("Fetching notifications for user ID: {}", currentUser.getId());
+        
+        // Apply default sorting if no sort is specified
+        if (pageable.getSort().isUnsorted()) {
+            pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), 
+                Sort.by(Sort.Direction.DESC, "createdAt"));
+        }
+        
         Page<Notification> notificationPage = notificationRepository.findByRecipientOrderByCreatedAtDesc(currentUser, pageable);
         return notificationPage.map(NotificationResponse::fromEntity);
     }

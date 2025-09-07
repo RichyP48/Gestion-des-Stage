@@ -1,0 +1,190 @@
+
+    <div class="space-y-6">
+      <!-- Header -->
+      <div class="flex justify-between items-center">
+        
+        
+        <div class="bg-white flex justify-between w-full rounded-lg shadow-sm border  p-6">
+            <div>
+                     <h1 class="text-2xl font-bold text-primary-900 mb-2">Gestion des Entreprises</h1>
+            <p class="text-primary-600">Administration et supervision des entreprises partenaires</p>
+   
+        </div>
+        <div class="flex space-x-2">
+          <select [(ngModel)]="selectedStatus" (change)="filterCompanies()" 
+                  class="px-3 py-2 h-12 border border-gray-300 rounded-md">
+            <option [ngValue]="''">Tous les statuts</option>
+            <option value="ACTIVE">Actives</option>
+            <option value="PENDING">En attente</option>
+            <option value="SUSPENDED">Suspendues</option>
+          </select>
+          <button (click)="exportCompanies()" 
+                  class="px-4 py-2 bg-primary-600 h-12 text-white rounded-md hover:bg-primary-700">
+            Exporter
+          </button>
+        </div> 
+    </div>
+        
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white p-6 rounded-lg shadow">
+          <div class="flex items-center">
+            <div class="p-2 bg-primary-100 rounded-lg">
+              <svg class="w-6 h-6 text-primry-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+              </svg>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-gray-600">Total</p>
+              <p class="text-2xl font-semibold text-gray-900">{{stats.total}}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow">
+          <div class="flex items-center">
+            <div class="p-2 bg-green-100 rounded-lg">
+              <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-gray-600">Actives</p>
+              <p class="text-2xl font-semibold text-gray-900">{{stats.active}}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow">
+          <div class="flex items-center">
+            <div class="p-2 bg-yellow-100 rounded-lg">
+              <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-gray-600">En attente</p>
+              <p class="text-2xl font-semibold text-gray-900">{{stats.pending}}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow">
+          <div class="flex items-center">
+            <div class="p-2 bg-red-100 rounded-lg">
+              <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728"></path>
+              </svg>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-gray-600">Suspendues</p>
+              <p class="text-2xl font-semibold text-gray-900">{{stats.suspended}}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Companies List -->
+      <div class="bg-white shadow rounded-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h3 class="text-lg font-medium text-gray-900">Liste des entreprises</h3>
+        </div>
+        
+        <div *ngIf="loading" class="p-6 text-center">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+          <p class="mt-2 text-gray-600">Chargement...</p>
+        </div>
+
+        <div *ngIf="!loading && filteredCompanies.length === 0" class="p-6 text-center text-gray-500">
+          Aucune entreprise trouvée
+        </div>
+
+        <div *ngIf="!loading && filteredCompanies.length > 0" class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Entreprise
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Contact
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Secteur
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Offres actives
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Statut
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr *ngFor="let company of filteredCompanies" class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <div class="flex-shrink-0 h-10 w-10">
+                      <div class="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
+                        <span class="text-sm font-medium text-primary-600">
+                          {{getCompanyInitials(company.name)}}
+                        </span>
+                      </div>
+                    </div>
+                    <div class="ml-4">
+                      <div class="text-sm font-medium text-gray-900">{{company.name}}</div>
+                      <div class="text-sm text-gray-500">{{company.id}}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-900">{{company.primaryContactUserEmail}}</div>
+                  <div class="text-sm text-gray-500">{{company.address}}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{company.industrySector}}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{company.activeOffers || 0}}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span [ngClass]="getStatusClass(company.status)" 
+                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
+                    {{getStatusLabel(company.status)}}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <div class="flex space-x-2">
+                    <button [routerLink]="['/admin/companies', company.id]"
+                            class="text-primary-600 hover:text-primary-900">
+                      Voir
+                    </button>
+                    <button *ngIf="company.status === 'PENDING'" 
+                            (click)="approveCompany(company.id)"
+                            class="text-green-600 hover:text-green-900">
+                      Approuver
+                    </button>
+                    <button *ngIf="company.status === 'ACTIVE'" 
+                            (click)="suspendCompany(company.id)"
+                            class="text-red-600 hover:text-red-900">
+                      Suspendre
+                    </button>
+                    <button *ngIf="company.status === 'SUSPENDED'" 
+                            (click)="activateCompany(company.id)"
+                            class="text-green-600 hover:text-green-900">
+                      Réactiver
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  

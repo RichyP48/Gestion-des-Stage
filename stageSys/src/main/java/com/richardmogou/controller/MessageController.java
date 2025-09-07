@@ -35,7 +35,7 @@ public class MessageController {
     public ResponseEntity<?> getMessageHistory(
             @RequestParam Long otherUserId,
             @RequestParam(required = false) Long applicationId,
-            @PageableDefault(size = 20, sort = "timestamp,asc") Pageable pageable) {
+            @PageableDefault(size = 20) Pageable pageable) {
 
         log.info("Received request for message history with otherUserId: {}, applicationId: {}", otherUserId, applicationId);
         try {

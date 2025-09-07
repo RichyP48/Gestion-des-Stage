@@ -32,7 +32,7 @@ public class AdminUserController {
      */
     @GetMapping
     public ResponseEntity<Page<UserResponse>> getAllUsers(
-            @PageableDefault(size = 20, sort = "lastName,asc") Pageable pageable) {
+            @PageableDefault(size = 20) Pageable pageable) {
         log.info("Admin request to list all users");
         Page<UserResponse> userPage = adminUserService.getAllUsers(pageable);
         return ResponseEntity.ok(userPage);

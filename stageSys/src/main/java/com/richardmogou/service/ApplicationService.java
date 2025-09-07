@@ -18,7 +18,9 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -95,6 +97,13 @@ public class ApplicationService {
             throw new UnauthorizedAccessException("User does not have STUDENT role.");
         }
         log.debug("Fetching applications for student ID: {}", currentStudent.getId());
+        
+        // Apply default sorting if no sort is specified
+        if (pageable.getSort().isUnsorted()) {
+            pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), 
+                Sort.by(Sort.Direction.DESC, "applicationDate"));
+        }
+        
         Page<Application> applicationPage = applicationRepository.findByStudent(currentStudent, pageable);
         return applicationPage.map(ApplicationResponse::fromEntity);
     }
@@ -106,6 +115,12 @@ public class ApplicationService {
     public Page<ApplicationResponse> getApplicationsForCurrentCompany(Pageable pageable, Long filterOfferId) {
         Company currentCompany = companyService.getCurrentUserCompany();
         log.debug("Fetching applications for company ID: {}", currentCompany.getId());
+
+        // Apply default sorting if no sort is specified
+        if (pageable.getSort().isUnsorted()) {
+            pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), 
+                Sort.by(Sort.Direction.DESC, "applicationDate"));
+        }
 
         Page<Application> applicationPage;
         if (filterOfferId != null) {

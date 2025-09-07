@@ -68,11 +68,11 @@ public class DataInitializer implements CommandLineRunner {
 
         // 2. Create Users
         log.info("Creating Users...");
-        User adminUser = userRepository.save(createUser("Admin", "User", "admin@app.com", "password", Role.ADMIN, true));
+        User adminUser = userRepository.save(createUser("Admin", "User", "richardmogou@app.com", "password", Role.ADMIN, true));
         User facultyUser1 = userRepository.save(createUser("Alice", "Professor", "alice.prof@university.edu", "password", Role.FACULTY, true));
         User facultyUser2 = userRepository.save(createUser("Bob", "Lecturer", "bob.lect@university.edu", "password", Role.FACULTY, true));
 
-        User companyUser1 = userRepository.save(createUser("Jane", "Smith", "jane.smith@techcorp.com", "password", Role.COMPANY, true));
+        User companyUser1 = userRepository.save(createUser("Jane", "Smith", "jane.mogou@techcorp.com", "password", Role.COMPANY, true));
         User companyUser2 = userRepository.save(createUser("Peter", "Jones", "peter.jones@innovate.io", "password", Role.COMPANY, true));
         User companyUser3 = userRepository.save(createUser("Mark", "Chief", "mark.chief@financeplus.com", "password", Role.COMPANY, true));
 
