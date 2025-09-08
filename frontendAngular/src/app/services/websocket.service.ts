@@ -1,32 +1,81 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Subject } from 'rxjs';
-import { ChatMessage } from '../models/message.model';
+import { BehaviorSubject, Observable } from 'rxjs';
+
+export interface NotificationMessage {
+  id: number;
+  type: string;
+  message: string;
+  link: string;
+  read: boolean;
+  createdAt: string;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class WebSocketService {
-  private messageSubject = new Subject<ChatMessage>();
-  private notificationSubject = new Subject<any>();
-  private connectionStatusSubject = new BehaviorSubject<boolean>(false);
+  private socket: WebSocket | null = null;
+  private connected = false;
+  private notificationsSubject = new BehaviorSubject<NotificationMessage | null>(null);
+  
+  public notifications$ = this.notificationsSubject.asObservable();
 
-  messages$ = this.messageSubject.asObservable();
-  notifications$ = this.notificationSubject.asObservable();
-  connectionStatus$ = this.connectionStatusSubject.asObservable();
+  constructor() {}
 
-  constructor() {
-    console.log('WebSocket service disabled');
+  public connect(userId: string): void {
+    if (this.connected || this.socket) {
+      return;
+    }
+
+    try {
+      // Use native WebSocket instead of SockJS
+      const wsUrl = `ws://localhost:8080/ws?userId=${userId}`;
+      this.socket = new WebSocket(wsUrl);
+
+      this.socket.onopen = () => {
+        console.log('WebSocket connected');
+        this.connected = true;
+      };
+
+      this.socket.onmessage = (event) => {
+        try {
+          const notification: NotificationMessage = JSON.parse(event.data);
+          this.notificationsSubject.next(notification);
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error);
+        }
+      };
+
+      this.socket.onclose = () => {
+        console.log('WebSocket disconnected');
+        this.connected = false;
+        this.socket = null;
+      };
+
+      this.socket.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        this.connected = false;
+      };
+    } catch (error) {
+      console.error('Failed to connect WebSocket:', error);
+    }
   }
 
-  connect(): void {
-    console.log('WebSocket connect() called - service disabled');
+  public disconnect(): void {
+    if (this.socket) {
+      this.socket.close();
+      this.socket = null;
+      this.connected = false;
+    }
   }
 
-  disconnect(): void {
-    console.log('WebSocket disconnect() called - service disabled');
+  public isConnected(): boolean {
+    return this.connected;
   }
 
-  sendMessage(chatMessage: ChatMessage): void {
-    console.log('WebSocket sendMessage() called - service disabled', chatMessage);
+  public sendMessage(message: any): void {
+    if (this.socket && this.connected) {
+      this.socket.send(JSON.stringify(message));
+    }
   }
 }

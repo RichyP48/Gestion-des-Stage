@@ -89,7 +89,7 @@ export class StudentTestComponent implements OnInit {
 
   testAgreements(): void {
     console.log('🧪 Testing Agreements API...');
-    this.agreementService.getStudentAgreements(0, 10).subscribe({
+    this.agreementService.getStudentAgreements().subscribe({
       next: (data) => {
         console.log('✅ Agreements API success:', data);
         this.results = { type: 'agreements', data };

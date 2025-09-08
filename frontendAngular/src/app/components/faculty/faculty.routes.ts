@@ -23,6 +23,6 @@ export const FACULTY_ROUTES: Routes = [
   },
   {
     path: 'reports',
-    loadComponent: () => import('./pages/faculty-reports/faculty-reports.component').then(m => m.FacultyReportsComponent)
+    loadComponent: () => import('./faculty-reports/faculty-reports.component').then(m => m.FacultyReportsComponent)
   }
 ];

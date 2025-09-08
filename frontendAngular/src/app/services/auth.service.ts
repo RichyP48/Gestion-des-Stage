@@ -89,6 +89,16 @@ export class AuthService {
     );
   }
 
+  registerSchool(registrationData: any): Observable<AuthResponse> {
+    return this.apiService.post<AuthResponse>('/auth/register/school', registrationData).pipe(
+      tap(response => this.handleAuthResponse(response)),
+      catchError(error => {
+        console.error('School registration error:', error);
+        return throwError(() => new Error(error.error || 'Registration failed. Please try again.'));
+      })
+    );
+  }
+
   getUserProfile(): Observable<User> {
     return this.apiService.get<User>('/users/me').pipe(
       tap(user => {

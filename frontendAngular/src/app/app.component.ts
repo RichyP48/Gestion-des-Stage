@@ -5,11 +5,13 @@ import { DomMonitorService } from './services/dom-monitor.service';
 import { ApiConnectorService } from './services/api-connector.service';
 import { AppInitializerService } from './services/app-initializer.service';
 import { AuthService } from './services/auth.service';
+import { WebSocketService } from './services/websocket.service';
+import { NotificationToastComponent } from './components/shared/notification-toast/notification-toast.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, CommonModule],
+  imports: [RouterOutlet, CommonModule, NotificationToastComponent],
   template: `
     <div class="min-h-screen bg-gray-50">
       <!-- Development API Status (only show in development) -->
@@ -43,6 +45,9 @@ import { AuthService } from './services/auth.service';
 
       <!-- Main Application Content -->
       <router-outlet></router-outlet>
+      
+      <!-- Notification Toasts -->
+      <app-notification-toast></app-notification-toast>
     </div>
   `,
   styleUrl: './app.component.css'
@@ -59,7 +64,8 @@ export class AppComponent implements OnInit {
     private domMonitor: DomMonitorService,
     private apiConnector: ApiConnectorService,
     private appInitializer: AppInitializerService,
-    private authService: AuthService
+    private authService: AuthService,
+    private webSocketService: WebSocketService
   ) {
     console.log('🚀 AppComponent constructor called');
     console.log('📱 Application starting...', {
@@ -95,6 +101,14 @@ export class AppComponent implements OnInit {
 
     // Update component properties
     this.updateStatus();
+    
+    // Initialize WebSocket if user is logged in
+    if (this.authService.isLoggedIn()) {
+      const user = this.authService.getCurrentUser();
+      if (user?.id) {
+        this.webSocketService.connect(user.id.toString());
+      }
+    }
   }
 
   updateStatus(): void {

@@ -49,7 +49,7 @@ loadUsers() {
     },
     error: (error) => {
       console.error('Erreur lors du chargement des utilisateurs:', error);
-      this.notificationService.error('Erreur lors du chargement des utilisateurs');
+      this.notificationService.showError('Erreur lors du chargement des utilisateurs');
     }
   });
 }
@@ -72,11 +72,11 @@ loadUsers() {
         next: () => {
           this.loadUsers();
           this.closeModal();
-          this.notificationService.success('Utilisateur modifié avec succès');
+          this.notificationService.showSuccess('Utilisateur modifié avec succès');
         },
         error: (error) => {
           console.error('Erreur lors de la modification:', error);
-          this.notificationService.error('Erreur lors de la modification de l\'utilisateur');
+          this.notificationService.showError('Erreur lors de la modification de l\'utilisateur');
         }
       });
     } else {
@@ -84,11 +84,11 @@ loadUsers() {
         next: () => {
           this.loadUsers();
           this.closeModal();
-          this.notificationService.success('Utilisateur créé avec succès');
+          this.notificationService.showSuccess('Utilisateur créé avec succès');
         },
         error: (error) => {
           console.error('Erreur lors de la création:', error);
-          this.notificationService.error('Erreur lors de la création de l\'utilisateur');
+          this.notificationService.showError('Erreur lors de la création de l\'utilisateur');
         }
       });
     }

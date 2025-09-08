@@ -133,7 +133,7 @@ export class SubmitApplicationComponent implements OnInit {
         this.offer = offer;
       },
       error: (error) => {
-        this.notificationService.error('Offre non trouvée');
+        this.notificationService.showError('Offre non trouvée');
         this.router.navigate(['/offers']);
       }
     });
@@ -147,11 +147,11 @@ export class SubmitApplicationComponent implements OnInit {
     const file = event.target.files[0];
     if (file) {
       if (file.type !== 'application/pdf') {
-        this.notificationService.error('Seuls les fichiers PDF sont acceptés');
+        this.notificationService.showError('Seuls les fichiers PDF sont acceptés');
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
-        this.notificationService.error('Le fichier ne doit pas dépasser 5MB');
+        this.notificationService.showError('Le fichier ne doit pas dépasser 5MB');
         return;
       }
       this.selectedFile = file;
@@ -187,14 +187,14 @@ export class SubmitApplicationComponent implements OnInit {
       this.selectedFile!
     ).subscribe({
       next: () => {
-        this.notificationService.success('Candidature envoyée avec succès !');
+        this.notificationService.showSuccess('Candidature envoyée avec succès !');
         this.router.navigate(['/student/applications']);
       },
       error: (error) => {
         if (error.status === 409) {
-          this.notificationService.error('Vous avez déjà postulé à cette offre');
+          this.notificationService.showError('Vous avez déjà postulé à cette offre');
         } else {
-          this.notificationService.error('Erreur lors de l\'envoi');
+          this.notificationService.showError('Erreur lors de l\'envoi');
         }
         this.isSubmitting = false;
       }

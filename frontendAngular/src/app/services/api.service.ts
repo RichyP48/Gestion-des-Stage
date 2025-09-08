@@ -41,6 +41,13 @@ export class ApiService {
     return this.http.delete<T>(`${this.apiUrl}${path}`);
   }
 
+  getBlob(path: string, params: HttpParams = new HttpParams()): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}${path}`, { 
+      params, 
+      responseType: 'blob' 
+    });
+  }
+
   /**
    * Creates FormData from a mix of file and JSON data
    * @param files Object containing file fields and their File objects
@@ -252,6 +259,37 @@ export class ApiService {
 
   getAdminSystemHealth(): Observable<any> {
     return this.http.get(`${this.apiUrl}/admin/stats/health`);
+  }
+
+  // ===== ADMIN AGREEMENTS =====
+  getAllAgreementsAdmin(page = 0, size = 20): Observable<any> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', 'createdAt,desc');
+    
+    return this.http.get(`${this.apiUrl}/admin/agreements`, { params });
+  }
+
+  getPendingAgreementsAdmin(page = 0, size = 10): Observable<any> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', 'createdAt,asc');
+    
+    return this.http.get(`${this.apiUrl}/admin/agreements/pending`, { params });
+  }
+
+  getAgreementStatsAdmin(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/admin/stats/agreements`);
+  }
+
+  approveAgreementAdmin(agreementId: number, approvalData: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/admin/agreements/${agreementId}/approve`, approvalData);
+  }
+
+  rejectAgreementAdmin(agreementId: number, rejectionData: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/admin/agreements/${agreementId}/reject`, rejectionData);
   }
 
   // ===== SUPPORTING RESOURCES =====

@@ -3,20 +3,24 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AgreementService } from '../../../../services/agreement.service';
 import { AuthService } from '../../../../services/auth.service';
+import { NotificationService } from '../../../../services/notification.service';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 
 interface Agreement {
   id: number;
-  studentName: string;
-  companyName: string;
-  offerTitle: string;
-  startDate: Date;
-  endDate: Date;
-  status: 'DRAFT' | 'PENDING' | 'SIGNED' | 'ACTIVE' | 'COMPLETED';
-  signedByStudent: boolean;
-  signedByCompany: boolean;
-  signedByFaculty: boolean;
+  studentName?: string;
+  companyName?: string;
+  offerTitle?: string;
+  startDate?: Date;
+  endDate?: Date;
+  status: string;
+  signedByStudent?: boolean;
+  signedByCompany?: boolean;
+  signedByFaculty?: boolean;
+  studentSignatureDate?: string;
+  companySignatureDate?: string;
+  facultySignatureDate?: string;
 }
 
 @Component({
@@ -108,7 +112,8 @@ export class StudentAgreementsComponent implements OnInit {
 
   constructor(
     private agreementService: AgreementService,
-    private authService: AuthService
+    private authService: AuthService,
+    private notificationService: NotificationService
   ) {
     console.log('📜 StudentAgreementsComponent initialized');
   }
@@ -128,36 +133,38 @@ export class StudentAgreementsComponent implements OnInit {
 
     console.log('👤 Loading agreements for user:', currentUser.id);
 
-    this.agreementService.getStudentAgreements(0, 50).pipe(
-      catchError(error => {
-        console.error('❌ Error loading agreements from API:', error);
-        // Return demo data as fallback
-        return of({
-          content: [
-            {
-              id: 1,
-              studentName: 'Jean Dupont',
-              companyName: 'TechCorp',
-              offerTitle: 'Stage Développement Web',
-              startDate: new Date('2024-06-01'),
-              endDate: new Date('2024-11-30'),
-              status: 'PENDING',
-              signedByStudent: false,
-              signedByCompany: true,
-              signedByFaculty: false
-            }
-          ],
-          totalElements: 1
-        });
-      })
-    ).subscribe({
+    this.agreementService.getStudentAgreements(0, 50).subscribe({
       next: (data) => {
         console.log('✅ Agreements loaded successfully:', data);
+        const previousCount = this.agreements.length;
         this.agreements = data.content || data;
         console.log('📊 Total agreements:', this.agreements.length);
+        
+        // Check for status changes and notify
+        this.checkForStatusChanges(previousCount);
       },
       error: (error) => {
-        console.error('❌ Unexpected error loading agreements:', error);
+        console.error('❌ Error loading agreements:', error);
+        this.notificationService.showError('Erreur lors du chargement des conventions');
+      }
+    });
+  }
+  
+  private checkForStatusChanges(previousCount: number) {
+    // Load server notifications to get real-time updates
+    this.notificationService.loadServerNotifications();
+    
+    // If new agreements or status changes, show notification
+    if (this.agreements.length > previousCount) {
+      this.notificationService.showInfo('Nouvelles mises à jour sur vos conventions');
+    }
+    
+    // Check for validated/rejected agreements and show local notifications
+    this.agreements.forEach(agreement => {
+      if (agreement.status === 'PENDING_ADMIN_APPROVAL') {
+        this.notificationService.showSuccess('Votre convention a été validée par la faculté');
+      } else if (agreement.status === 'REJECTED') {
+        this.notificationService.showError('Votre convention a été rejetée par la faculté');
       }
     });
   }
@@ -165,13 +172,7 @@ export class StudentAgreementsComponent implements OnInit {
   signAgreement(agreement: Agreement) {
     console.log('✍️ Signing agreement:', agreement.id);
     
-    this.agreementService.signAgreement(agreement.id).pipe(
-      catchError(error => {
-        console.error('❌ Error signing agreement via API:', error);
-        // Fallback: update locally
-        return of({ ...agreement, signedByStudent: true });
-      })
-    ).subscribe({
+    this.agreementService.signAgreement(agreement.id).subscribe({
       next: (updatedAgreement) => {
         console.log('✅ Agreement signed successfully:', updatedAgreement);
         agreement.signedByStudent = true;
@@ -182,16 +183,12 @@ export class StudentAgreementsComponent implements OnInit {
           console.log('🎉 Agreement fully signed!');
         }
         
-        console.log('📝 Updated agreement status:', {
-          id: agreement.id,
-          status: agreement.status,
-          signedByStudent: agreement.signedByStudent,
-          signedByCompany: agreement.signedByCompany,
-          signedByFaculty: agreement.signedByFaculty
-        });
+        this.notificationService.showSuccess('Convention signée avec succès');
+        this.loadAgreements(); // Recharger les données
       },
       error: (error) => {
-        console.error('❌ Unexpected error signing agreement:', error);
+        console.error('❌ Error signing agreement:', error);
+        this.notificationService.showError('Erreur lors de la signature de la convention');
       }
     });
   }
@@ -206,7 +203,7 @@ export class StudentAgreementsComponent implements OnInit {
         return of(null);
       })
     ).subscribe({
-      next: (blob) => {
+      next: (blob: Blob | null) => {
         if (blob) {
           console.log('✅ PDF downloaded successfully');
           
@@ -223,7 +220,7 @@ export class StudentAgreementsComponent implements OnInit {
           console.log('📎 PDF download initiated');
         }
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('❌ Unexpected error downloading PDF:', error);
       }
     });

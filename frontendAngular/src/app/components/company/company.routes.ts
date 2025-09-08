@@ -32,5 +32,9 @@ export const COMPANY_ROUTES: Routes = [
   {
     path: 'agreements/:id',
     loadComponent: () => import('./pages/company-agreement-detail/company-agreement-detail.component').then(m => m.CompanyAgreementDetailComponent)
+  },
+  {
+    path: 'reports',
+    loadComponent: () => import('./pages/company-dashboard/company-dashboard.component').then(m => m.CompanyDashboardComponent)
   }
 ];

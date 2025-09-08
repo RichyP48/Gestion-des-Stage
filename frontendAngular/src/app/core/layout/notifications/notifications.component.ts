@@ -105,11 +105,11 @@ export class NotificationsComponent implements OnInit, OnDestroy {
       this.notificationService.getServerNotifications()
         .pipe(takeUntil(this.destroy$))
         .subscribe({
-          next: (notifications) => {
-            this.notifications = notifications || [];
+          next: (response: any) => {
+            this.notifications = response.content || response || [];
             this.updateUnreadCount();
           },
-          error: (error) => {
+          error: (error: any) => {
             console.error('Erreur lors du chargement des notifications:', error);
             this.notifications = [];
             this.unreadCount = 0;
@@ -124,7 +124,13 @@ export class NotificationsComponent implements OnInit, OnDestroy {
 
   markAllAsRead(): void {
     this.unreadCount = 0;
-    this.notificationService.clear();
+    this.notificationService.markAllServerNotificationsAsRead().subscribe({
+      next: () => {
+        this.notifications = [];
+        this.unreadCount = 0;
+      },
+      error: (error: any) => console.error('Error clearing notifications:', error)
+    });
     this.notifications = [];
   }
 

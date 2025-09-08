@@ -1,12 +1,16 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
+import { SchoolService, School, Faculty } from '../../../services/school.service';
+import { AuthService } from '../../../services/auth.service';
+import { NotificationService } from '../../../services/notification.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, RouterLink, ReactiveFormsModule],
+  imports: [CommonModule, RouterLink, ReactiveFormsModule, FormsModule],
   template: `
     <div class="flex">
       <div class="h-screen flex flex-col items-center justify-center bg-gradient-to-r from-[#2dd4bf] to-[#1f2937] w-full overflow-y-auto">
@@ -86,27 +90,51 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
                   class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                 />
               </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700">École</label>
+                <select
+                  formControlName="schoolId"
+                  class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  [ngClass]="{ 'border-red-500': registerForm.get('schoolId')?.invalid && registerForm.get('schoolId')?.touched }"
+                  (change)="onSchoolChange($event)">
+                  <option value="">Sélectionnez une école</option>
+                  <option *ngFor="let school of schools" [value]="school.id">{{school.name}}</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Faculté</label>
+                <select
+                  formControlName="facultyId"
+                  class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  [ngClass]="{ 'border-red-500': registerForm.get('facultyId')?.invalid && registerForm.get('facultyId')?.touched }"
+                  [disabled]="!selectedSchoolId">
+                  <option value="">Sélectionnez une faculté</option>
+                  <option *ngFor="let faculty of faculties" [value]="faculty.id">{{faculty.name}}</option>
+                </select>
+              </div>
             </div>
 
-            <!-- Faculty Fields -->
+            <!-- Faculty/School Fields -->
             <div *ngIf="selectedRole === 'FACULTY'">
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-sm font-medium text-gray-700">Prénom</label>
+                  <label class="block text-sm font-medium text-gray-700">Prénom contact</label>
                   <input
-                    formControlName="firstName"
+                    formControlName="contactFirstName"
                     type="text"
                     class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                    [ngClass]="{ 'border-red-500': registerForm.get('firstName')?.invalid && registerForm.get('firstName')?.touched }"
+                    [ngClass]="{ 'border-red-500': registerForm.get('contactFirstName')?.invalid && registerForm.get('contactFirstName')?.touched }"
                   />
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700">Nom</label>
+                  <label class="block text-sm font-medium text-gray-700">Nom contact</label>
                   <input
-                    formControlName="lastName"
+                    formControlName="contactLastName"
                     type="text"
                     class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                    [ngClass]="{ 'border-red-500': registerForm.get('lastName')?.invalid && registerForm.get('lastName')?.touched }"
+                    [ngClass]="{ 'border-red-500': registerForm.get('contactLastName')?.invalid && registerForm.get('contactLastName')?.touched }"
                   />
                 </div>
               </div>
@@ -114,30 +142,42 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
               <div>
                 <label class="block text-sm font-medium text-gray-700">Email</label>
                 <input
-                  formControlName="email"
+                  formControlName="contactEmail"
                   type="email"
                   class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                  [ngClass]="{ 'border-red-500': registerForm.get('email')?.invalid && registerForm.get('email')?.touched }"
+                  [ngClass]="{ 'border-red-500': registerForm.get('contactEmail')?.invalid && registerForm.get('contactEmail')?.touched }"
                 />
               </div>
               
               <div>
                 <label class="block text-sm font-medium text-gray-700">Nom de l'établissement</label>
                 <input
-                  formControlName="institutionName"
+                  formControlName="schoolName"
                   type="text"
                   class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                  [ngClass]="{ 'border-red-500': registerForm.get('institutionName')?.invalid && registerForm.get('institutionName')?.touched }"
+                  [ngClass]="{ 'border-red-500': registerForm.get('schoolName')?.invalid && registerForm.get('schoolName')?.touched }"
                 />
               </div>
               
               <div>
-                <label class="block text-sm font-medium text-gray-700">Département</label>
-                <input
-                  formControlName="department"
-                  type="text"
+                <label class="block text-sm font-medium text-gray-700">Description</label>
+                <textarea
+                  formControlName="schoolDescription"
+                  rows="2"
                   class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                />
+                ></textarea>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Facultés (séparées par des virgules)</label>
+                <textarea
+                  formControlName="facultyNames"
+                  rows="3"
+                  class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  placeholder="Informatique, Mathématiques, Physique, Chimie..."
+                  [ngClass]="{ 'border-red-500': registerForm.get('facultyNames')?.invalid && registerForm.get('facultyNames')?.touched }"
+                ></textarea>
+                <p class="mt-1 text-sm text-gray-500">Entrez les noms des facultés séparés par des virgules</p>
               </div>
             </div>
 
@@ -250,14 +290,27 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
   `,
   styles: ``
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit {
   registerForm: FormGroup;
   selectedRole: 'STUDENT' | 'COMPANY' | 'FACULTY' = 'STUDENT';
   isLoading = false;
   errorMessage = '';
+  schools: School[] = [];
+  faculties: Faculty[] = [];
+  selectedSchoolId: number | null = null;
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder, 
+    private schoolService: SchoolService,
+    private authService: AuthService,
+    private notificationService: NotificationService,
+    private router: Router
+  ) {
     this.registerForm = this.createForm();
+  }
+
+  ngOnInit(): void {
+    this.loadSchools();
   }
 
   selectRole(role: 'STUDENT' | 'COMPANY' | 'FACULTY') {
@@ -272,15 +325,18 @@ export class RegisterComponent {
         lastName: ['', [Validators.required]],
         email: ['', [Validators.required, Validators.email]],
         phoneNumber: [''],
+        schoolId: ['', [Validators.required]],
+        facultyId: ['', [Validators.required]],
         password: ['', [Validators.required, Validators.minLength(6)]]
       });
     } else if (this.selectedRole === 'FACULTY') {
       return this.fb.group({
-        firstName: ['', [Validators.required]],
-        lastName: ['', [Validators.required]],
-        email: ['', [Validators.required, Validators.email]],
-        institutionName: ['', [Validators.required]],
-        department: [''],
+        contactFirstName: ['', [Validators.required]],
+        contactLastName: ['', [Validators.required]],
+        contactEmail: ['', [Validators.required, Validators.email]],
+        schoolName: ['', [Validators.required]],
+        schoolDescription: [''],
+        facultyNames: ['', [Validators.required]],
         password: ['', [Validators.required, Validators.minLength(6)]]
       });
     } else {
@@ -295,13 +351,86 @@ export class RegisterComponent {
     }
   }
 
+  loadSchools(): void {
+    console.log('Loading schools...');
+    this.schoolService.getAllSchools().subscribe({
+      next: (schools) => {
+        console.log('Schools loaded:', schools);
+        this.schools = schools;
+      },
+      error: (error) => {
+        console.error('Error loading schools:', error);
+      }
+    });
+  }
+
+  onSchoolChange(event: any): void {
+    const schoolId = parseInt(event.target.value);
+    console.log('School changed to:', schoolId);
+    this.selectedSchoolId = schoolId;
+    this.faculties = [];
+    this.registerForm.get('facultyId')?.setValue('');
+    
+    if (schoolId) {
+      console.log('Loading faculties for school:', schoolId);
+      this.schoolService.getFacultiesBySchool(schoolId).subscribe({
+        next: (faculties) => {
+          console.log('Faculties loaded:', faculties);
+          this.faculties = faculties;
+        },
+        error: (error) => {
+          console.error('Error loading faculties:', error);
+        }
+      });
+    }
+  }
+
   onSubmit() {
     if (this.registerForm.valid) {
       this.isLoading = true;
-      setTimeout(() => {
-        this.isLoading = false;
-        console.log('Register:', { role: this.selectedRole, ...this.registerForm.value });
-      }, 2000);
+      this.errorMessage = '';
+      
+      let formData = { ...this.registerForm.value };
+      
+      if (this.selectedRole === 'FACULTY') {
+        const facultyNamesString = formData.facultyNames || '';
+        formData.facultyNames = facultyNamesString
+          .split(',')
+          .map((name: string) => name.trim())
+          .filter((name: string) => name !== '');
+        console.log('Faculty names being sent:', formData.facultyNames);
+      }
+      
+      let registerObservable;
+      
+      switch (this.selectedRole) {
+        case 'STUDENT':
+          registerObservable = this.authService.registerStudent(formData);
+          break;
+        case 'COMPANY':
+          registerObservable = this.authService.registerCompany(formData);
+          break;
+        case 'FACULTY':
+          registerObservable = this.authService.registerSchool(formData);
+          break;
+        default:
+          this.isLoading = false;
+          return;
+      }
+      
+      registerObservable.subscribe({
+        next: (response) => {
+          this.isLoading = false;
+          this.notificationService.showSuccess('Inscription réussie ! Vous êtes maintenant connecté.');
+          this.router.navigate(['/dashboard']);
+        },
+        error: (error) => {
+          this.isLoading = false;
+          const errorMsg = error.error || 'Erreur lors de l\'inscription';
+          this.errorMessage = errorMsg;
+          this.notificationService.showError(errorMsg);
+        }
+      });
     }
   }
 }

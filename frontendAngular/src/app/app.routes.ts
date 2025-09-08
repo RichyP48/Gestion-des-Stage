@@ -41,7 +41,7 @@ export const routes: Routes = [
     children: [
       { path: 'dashboard', loadComponent: () => import('./components/company/pages/company-dashboard/company-dashboard.component').then(m => m.CompanyDashboardComponent) },
       { path: 'offers', loadComponent: () => import('./components/company/company-offers/company-offers.component').then(m => m.CompanyOffersComponent) },
-      { path: 'applications', loadComponent: () => import('./components/company/pages/company-dashboard/company-dashboard.component').then(m => m.CompanyDashboardComponent) },
+      { path: 'applications', loadComponent: () => import('./components/company/pages/company-applications/company-applications.component').then(m => m.CompanyApplicationsComponent) }, 
       { path: 'agreements', loadComponent: () => import('./components/company/pages/company-dashboard/company-dashboard.component').then(m => m.CompanyDashboardComponent) }
     ]
   },
@@ -54,8 +54,8 @@ export const routes: Routes = [
       { path: 'dashboard', loadComponent: () => import('./components/faculty/pages/faculty-dashboard/faculty-dashboard.component').then(m => m.FacultyDashboardComponent) },
       { path: 'students', loadComponent: () => import('./components/faculty/faculty-students/faculty-students.component').then(m => m.FacultyStudentsComponent) },
       { path: 'companies', loadComponent: () => import('./components/faculty/pages/faculty-companies/faculty-companies.component').then(m => m.FacultyCompaniesComponent) },
-      { path: 'agreements', loadComponent: () => import('./components/faculty/pages/faculty-dashboard/faculty-dashboard.component').then(m => m.FacultyDashboardComponent) },
-      { path: 'reports', loadComponent: () => import('./components/faculty/pages/faculty-dashboard/faculty-dashboard.component').then(m => m.FacultyDashboardComponent) }
+      { path: 'agreements', loadComponent: () => import('./components/faculty/pages/faculty-agreements/faculty-agreements.component').then(m => m.FacultyAgreementsComponent) },
+      { path: 'reports', loadComponent: () => import('./components/faculty/faculty-reports/faculty-reports.component').then(m => m.FacultyReportsComponent) }
     ]
   },
   {

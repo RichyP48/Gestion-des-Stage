@@ -133,7 +133,7 @@ export class StudentDashboardComponent implements OnInit {
           return of({ content: [], totalElements: 0 });
         })
       ),
-      agreements: this.agreementService.getStudentAgreements(0, 100).pipe(
+      agreements: this.agreementService.getStudentAgreements().pipe(
         catchError(error => {
           console.error('❌ Error loading agreements:', error);
           return of({ content: [], totalElements: 0 });
