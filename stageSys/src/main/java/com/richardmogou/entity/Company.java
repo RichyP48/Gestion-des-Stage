@@ -1,5 +1,6 @@
 package com.richardmogou.entity;
 
+import com.richardmogou.enums.CompanyStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
@@ -33,6 +34,10 @@ public class Company {
     private String address; // Consider breaking down into structured address fields if needed
 
     private String industrySector; // Consider linking to a Sector entity
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = true)
+    private CompanyStatus status = CompanyStatus.ACTIVE;
 
     @ManyToOne(fetch = FetchType.LAZY) // Lazy fetch is often preferred for performance
     @JoinColumn(name = "primary_contact_user_id")

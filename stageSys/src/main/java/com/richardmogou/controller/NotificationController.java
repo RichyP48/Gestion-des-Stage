@@ -1,18 +1,17 @@
 package com.richardmogou.controller;
 
-import com.richardmogou.dto.NotificationResponse;
-import com.richardmogou.exception.ResourceNotFoundException;
-import com.richardmogou.exception.UnauthorizedAccessException;
+import com.richardmogou.entity.Notification;
+import com.richardmogou.entity.User;
 import com.richardmogou.service.NotificationService;
+import com.richardmogou.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -20,98 +19,90 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor
+@Slf4j
+@CrossOrigin(origins = "http://localhost:4200")
 public class NotificationController {
 
-    private static final Logger log = LoggerFactory.getLogger(NotificationController.class);
     private final NotificationService notificationService;
+    private final UserService userService;
 
-    /**
-     * GET /api/notifications/me : Get notifications for the current user.
-     * Requires authentication.
-     */
-    @GetMapping("/me")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> getNotificationsForCurrentUser(
-            @PageableDefault(size = 15) Pageable pageable) {
-        log.info("Received request to get notifications for current user");
+    @GetMapping
+    public ResponseEntity<Page<Notification>> getUserNotifications(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Authentication authentication) {
+        
         try {
-            Page<NotificationResponse> responsePage = notificationService.getNotificationsForCurrentUser(pageable);
-            return ResponseEntity.ok(responsePage);
-        } catch (IllegalStateException e) {
-             log.warn("Fetching notifications failed due to illegal state: {}", e.getMessage());
-             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication context error.");
+            User currentUser = userService.findByEmail(authentication.getName());
+            Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+            Page<Notification> notifications = notificationService.getUserNotifications(currentUser, pageable);
+            
+            log.info("Retrieved {} notifications for user {}", notifications.getTotalElements(), currentUser.getEmail());
+            return ResponseEntity.ok(notifications);
         } catch (Exception e) {
-            log.error("Error fetching notifications for current user", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while fetching notifications.");
+            log.error("Error retrieving notifications", e);
+            return ResponseEntity.internalServerError().build();
         }
     }
 
-     /**
-     * GET /api/notifications/me/unread-count : Get count of unread notifications for the current user.
-     * Requires authentication.
-     */
-    @GetMapping("/me/unread-count")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> getUnreadNotificationCount() {
-        log.debug("Received request for unread notification count");
-         try {
-            long count = notificationService.countUnreadNotificationsForCurrentUser();
-            // Return count in a simple JSON object
-            return ResponseEntity.ok(Map.of("unreadCount", count));
-        } catch (IllegalStateException e) {
-             log.warn("Fetching unread count failed due to illegal state: {}", e.getMessage());
-             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication context error.");
+    @GetMapping("/unread-count")
+    public ResponseEntity<Map<String, Long>> getUnreadCount(Authentication authentication) {
+        try {
+            User currentUser = userService.findByEmail(authentication.getName());
+            long unreadCount = notificationService.getUnreadCount(currentUser);
+            
+            return ResponseEntity.ok(Map.of("count", unreadCount));
         } catch (Exception e) {
-            log.error("Error fetching unread notification count", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while fetching unread count.");
+            log.error("Error getting unread count", e);
+            return ResponseEntity.internalServerError().build();
         }
     }
 
-
-    /**
-     * PUT /api/notifications/{notificationId}/read : Mark a specific notification as read.
-     * Requires authentication.
-     */
     @PutMapping("/{notificationId}/read")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> markNotificationAsRead(@PathVariable Long notificationId) {
-        log.info("Received request to mark notification ID {} as read", notificationId);
+    public ResponseEntity<Void> markAsRead(
+            @PathVariable Long notificationId,
+            Authentication authentication) {
+        
         try {
-            NotificationResponse response = notificationService.markNotificationAsRead(notificationId);
-            return ResponseEntity.ok(response); // Return updated notification
-        } catch (ResourceNotFoundException e) {
-            log.warn("Mark as read failed, notification not found: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (UnauthorizedAccessException e) {
-            log.warn("Unauthorized attempt to mark notification {} as read: {}", notificationId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
-        } catch (IllegalStateException e) {
-             log.warn("Mark as read failed due to illegal state: {}", e.getMessage());
-             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication context error.");
+            User currentUser = userService.findByEmail(authentication.getName());
+            notificationService.markAsRead(notificationId, currentUser);
+            
+            log.info("Notification {} marked as read by user {}", notificationId, currentUser.getEmail());
+            return ResponseEntity.ok().build();
         } catch (Exception e) {
-            log.error("Error marking notification {} as read", notificationId, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while marking notification as read.");
+            log.error("Error marking notification as read", e);
+            return ResponseEntity.badRequest().build();
         }
     }
 
-    /**
-     * PUT /api/notifications/me/read-all : Mark all unread notifications for the current user as read.
-     * Requires authentication.
-     */
-    @PutMapping("/me/read-all")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> markAllNotificationsAsRead() {
-        log.info("Received request to mark all notifications as read for current user");
-         try {
-            int count = notificationService.markAllNotificationsAsReadForCurrentUser();
-            // Return count of updated notifications in a simple JSON object
-            return ResponseEntity.ok(Map.of("updatedCount", count));
-        } catch (IllegalStateException e) {
-             log.warn("Mark all as read failed due to illegal state: {}", e.getMessage());
-             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication context error.");
+    @PutMapping("/mark-all-read")
+    public ResponseEntity<Void> markAllAsRead(Authentication authentication) {
+        try {
+            User currentUser = userService.findByEmail(authentication.getName());
+            notificationService.markAllAsRead(currentUser);
+            
+            log.info("All notifications marked as read for user {}", currentUser.getEmail());
+            return ResponseEntity.ok().build();
         } catch (Exception e) {
             log.error("Error marking all notifications as read", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while marking all notifications as read.");
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @DeleteMapping("/{notificationId}")
+    public ResponseEntity<Void> deleteNotification(
+            @PathVariable Long notificationId,
+            Authentication authentication) {
+        
+        try {
+            User currentUser = userService.findByEmail(authentication.getName());
+            notificationService.deleteNotification(notificationId, currentUser);
+            
+            log.info("Notification {} deleted by user {}", notificationId, currentUser.getEmail());
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            log.error("Error deleting notification", e);
+            return ResponseEntity.badRequest().build();
         }
     }
 }

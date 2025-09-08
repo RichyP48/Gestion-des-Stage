@@ -2,8 +2,12 @@ package com.richardmogou.controller;
 
 import com.richardmogou.dto.CompanyResponse;
 import com.richardmogou.dto.CompanyUpdateRequest;
+import com.richardmogou.dto.InternshipOfferResponse;
 import com.richardmogou.exception.ResourceNotFoundException;
 import com.richardmogou.service.CompanyService;
+import com.richardmogou.service.InternshipOfferService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -20,6 +24,7 @@ public class CompanyController {
 
     private static final Logger log = LoggerFactory.getLogger(CompanyController.class);
     private final CompanyService companyService;
+    private final InternshipOfferService offerService;
 
     /**
      * GET /api/companies/me : Get details of the company associated with the logged-in user.
@@ -65,6 +70,23 @@ public class CompanyController {
         } catch (Exception e) {
             log.error("Error updating current company details", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while updating company details.");
+        }
+    }
+
+    /**
+     * GET /api/companies/me/offers : Get offers for the current company
+     * Requires COMPANY role.
+     */
+    @GetMapping("/me/offers")
+    @PreAuthorize("hasRole('COMPANY')")
+    public ResponseEntity<?> getCurrentCompanyOffers(Pageable pageable) {
+        log.info("Received request to get offers for current company");
+        try {
+            Page<InternshipOfferResponse> offers = offerService.getOffersForCurrentCompany(pageable);
+            return ResponseEntity.ok(offers);
+        } catch (Exception e) {
+            log.error("Error fetching offers for current company", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while fetching offers.");
         }
     }
 

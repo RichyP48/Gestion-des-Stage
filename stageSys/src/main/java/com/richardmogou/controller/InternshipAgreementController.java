@@ -21,6 +21,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import java.util.Map;
+import com.richardmogou.entity.User;
+import com.richardmogou.entity.enums.Role;
+import com.richardmogou.service.UserService;
 
 @RestController
 @RequestMapping("/api/agreements")
@@ -29,8 +33,7 @@ public class InternshipAgreementController {
 
     private static final Logger log = LoggerFactory.getLogger(InternshipAgreementController.class);
     private final InternshipAgreementService agreementService;
-    // Inject FileStorageService/PdfGenerationService if handling download here
-    // private final FileStorageService fileStorageService;
+    private final UserService userService;
 
     /**
      * GET /api/agreements/{agreementId} : Get details of a specific agreement.
@@ -108,10 +111,10 @@ public class InternshipAgreementController {
 
 
     /**
-     * GET /api/faculty/me/agreements/pending : List agreements pending validation for the logged-in faculty.
+     * GET /api/agreements/faculty/pending : List agreements pending validation for the logged-in faculty.
      * Requires FACULTY role.
      */
-    @GetMapping("/faculty/me/agreements/pending") // Route defined in spec
+    @GetMapping("/faculty/pending") // Corrected route
     @PreAuthorize("hasRole('FACULTY')")
     public ResponseEntity<?> getAgreementsPendingFacultyValidation(
              @PageableDefault(size = 10) Pageable pageable) {
@@ -164,10 +167,10 @@ public class InternshipAgreementController {
     }
 
      /**
-     * GET /api/admin/agreements/pending : List agreements pending final approval by Admin.
+     * GET /api/agreements/admin/pending : List agreements pending final approval by Admin.
      * Requires ADMIN role.
      */
-    @GetMapping("/admin/agreements/pending") // Route defined in spec
+    @GetMapping("/admin/pending") // Corrected route
     @PreAuthorize("hasRole('ADMIN')")
      public ResponseEntity<?> getAgreementsPendingAdminApproval(
              @PageableDefault(size = 10) Pageable pageable) {
@@ -215,27 +218,107 @@ public class InternshipAgreementController {
     }
 
     /**
-     * GET /api/students/me/agreements : List agreements related to the logged-in student.
-     * Requires STUDENT role.
+     * GET /api/agreements : List agreements for the current authenticated user.
+     * Works for all roles - returns agreements based on user's role and permissions.
      */
-    @GetMapping("/students/me/agreements") // Route defined in spec
-    @PreAuthorize("hasRole('STUDENT')")
-    public ResponseEntity<?> getAgreementsForCurrentStudent(
+    @GetMapping
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getAgreementsForCurrentUser(
              @PageableDefault(size = 10) Pageable pageable) {
-         log.info("Received request to list agreements for current student");
-         try {
-             Page<InternshipAgreementResponse> responsePage = agreementService.getAgreementsForCurrentStudent(pageable);
-             return ResponseEntity.ok(responsePage);
-         } catch (UnauthorizedAccessException e) {
-             log.warn("Unauthorized attempt to list student agreements: {}", e.getMessage());
+        User currentUser = userService.getCurrentUser();
+        
+        try {
+            Page<InternshipAgreementResponse> responsePage;
+            
+            switch (currentUser.getRole()) {
+                case STUDENT:
+                    responsePage = agreementService.getAgreementsForCurrentStudent(pageable);
+                    break;
+                case FACULTY:
+                    responsePage = agreementService.getAgreementsPendingFacultyValidation(pageable);
+                    break;
+                case ADMIN:
+                    responsePage = agreementService.getAllAgreements(pageable);
+                    break;
+                case COMPANY:
+                    // For companies, we might need a specific method
+                    responsePage = agreementService.getAllAgreements(pageable); // Placeholder
+                    break;
+                default:
+                    throw new UnauthorizedAccessException("Invalid user role");
+            }
+            
+            return ResponseEntity.ok(responsePage);
+        } catch (UnauthorizedAccessException e) {
+            log.warn("Unauthorized attempt to list agreements: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (IllegalStateException e) {
-             log.warn("Listing student agreements failed due to illegal state: {}", e.getMessage());
-             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication context error.");
+            log.warn("Listing agreements failed due to illegal state: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication context error.");
         } catch (Exception e) {
-             log.error("Error fetching agreements for current student", e);
-             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while fetching student agreements.");
-         }
+            log.error("Error fetching agreements for current user", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while fetching agreements.");
+        }
+    }
+
+
+
+    /**
+     * POST /api/agreements : Create a new internship agreement.
+     * Requires authentication (typically called when application is accepted).
+     */
+    @PostMapping
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> createAgreement(@Valid @RequestBody Map<String, Object> agreementData) {
+        log.info("Received request to create new agreement");
+        try {
+            InternshipAgreementResponse response = agreementService.createAgreement(agreementData);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (BadRequestException e) {
+            log.warn("Agreement creation failed (bad request): {}", e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (ResourceNotFoundException e) {
+            log.warn("Agreement creation failed, resource not found: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (UnauthorizedAccessException e) {
+            log.warn("Unauthorized attempt to create agreement: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (IllegalStateException e) {
+            log.warn("Agreement creation failed due to illegal state: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication context error.");
+        } catch (Exception e) {
+            log.error("Error creating agreement", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while creating the agreement.");
+        }
+    }
+
+    /**
+     * PUT /api/agreements/{agreementId}/sign : Sign an agreement.
+     * The system determines who is signing based on the authenticated user.
+     */
+    @PutMapping("/{agreementId}/sign")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> signAgreement(@PathVariable Long agreementId) {
+        log.info("Received request to sign agreement ID: {}", agreementId);
+        try {
+            InternshipAgreementResponse response = agreementService.signAgreement(agreementId);
+            return ResponseEntity.ok(response);
+        } catch (ResourceNotFoundException e) {
+            log.warn("Agreement signing failed, resource not found: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (BadRequestException e) {
+            log.warn("Agreement signing failed (bad request): {}", e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (UnauthorizedAccessException e) {
+            log.warn("Unauthorized attempt to sign agreement ID {}: {}", agreementId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (IllegalStateException e) {
+            log.warn("Agreement signing failed due to illegal state: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication context error.");
+        } catch (Exception e) {
+            log.error("Error signing agreement ID {}", agreementId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while signing the agreement.");
+        }
     }
 
     // GET /api/admin/agreements - Admin endpoint for listing all agreements would be in AdminController

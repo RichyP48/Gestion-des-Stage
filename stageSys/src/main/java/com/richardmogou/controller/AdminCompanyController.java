@@ -98,5 +98,59 @@ public class AdminCompanyController {
         }
     }
 
+    /**
+     * PUT /api/admin/companies/{companyId}/approve : Approve a company.
+     */
+    @PutMapping("/{companyId}/approve")
+    public ResponseEntity<?> approveCompany(@PathVariable Long companyId) {
+        log.info("Admin request to approve company ID: {}", companyId);
+        try {
+            adminCompanyService.approveCompany(companyId);
+            return ResponseEntity.ok().build();
+        } catch (ResourceNotFoundException e) {
+            log.warn("Admin company approval failed, company not found: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error approving company ID {} by admin", companyId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while approving the company.");
+        }
+    }
+
+    /**
+     * PUT /api/admin/companies/{companyId}/suspend : Suspend a company.
+     */
+    @PutMapping("/{companyId}/suspend")
+    public ResponseEntity<?> suspendCompany(@PathVariable Long companyId) {
+        log.info("Admin request to suspend company ID: {}", companyId);
+        try {
+            adminCompanyService.suspendCompany(companyId);
+            return ResponseEntity.ok().build();
+        } catch (ResourceNotFoundException e) {
+            log.warn("Admin company suspension failed, company not found: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error suspending company ID {} by admin", companyId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while suspending the company.");
+        }
+    }
+
+    /**
+     * PUT /api/admin/companies/{companyId}/activate : Activate a company.
+     */
+    @PutMapping("/{companyId}/activate")
+    public ResponseEntity<?> activateCompany(@PathVariable Long companyId) {
+        log.info("Admin request to activate company ID: {}", companyId);
+        try {
+            adminCompanyService.activateCompany(companyId);
+            return ResponseEntity.ok().build();
+        } catch (ResourceNotFoundException e) {
+            log.warn("Admin company activation failed, company not found: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error activating company ID {} by admin", companyId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while activating the company.");
+        }
+    }
+
      // POST /api/admin/companies - Omitted for now as per service implementation note.
 }

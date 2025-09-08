@@ -33,6 +33,8 @@ public class DataInitializer implements CommandLineRunner {
     private final InternshipOfferRepository offerRepository;
     private final ApplicationRepository applicationRepository;
     private final InternshipAgreementRepository agreementRepository;
+    private final SchoolRepository schoolRepository;
+    private final FacultyRepository facultyRepository;
     private final PasswordEncoder passwordEncoder;
     private final InternshipAgreementService agreementService; // Use service to handle complex creation
 
@@ -42,7 +44,8 @@ public class DataInitializer implements CommandLineRunner {
         log.info("Starting data initialization...");
 
         if (userRepository.count() > 0) {
-            log.info("Data already initialized. Skipping.");
+            log.info("Data already exists. Checking faculty assignments...");
+            fixFacultyAssignments();
             return;
         }
 
@@ -66,20 +69,38 @@ public class DataInitializer implements CommandLineRunner {
         Sector financeSector = sectorRepository.save(createSector("Finance"));
         Sector marketingSector = sectorRepository.save(createSector("Marketing Agency"));
 
+        // Create Schools and Faculties
+        log.info("Creating Schools and Faculties...");
+        School paris = schoolRepository.save(createSchool("Université de Paris", "Université publique française"));
+        School mit = schoolRepository.save(createSchool("MIT", "Massachusetts Institute of Technology"));
+        School stanford = schoolRepository.save(createSchool("Stanford University", "Private research university"));
+        log.info("Created schools: Paris({}), MIT({}), Stanford({})", paris.getId(), mit.getId(), stanford.getId());
+        
+        Faculty informatiqueParis = facultyRepository.save(createFaculty("Informatique", paris));
+        Faculty mathsParis = facultyRepository.save(createFaculty("Mathématiques", paris));
+        Faculty csMit = facultyRepository.save(createFaculty("Computer Science", mit));
+        Faculty engineeringMit = facultyRepository.save(createFaculty("Engineering", mit));
+        Faculty businessStanford = facultyRepository.save(createFaculty("Business Administration", stanford));
+        Faculty csStanford = facultyRepository.save(createFaculty("Computer Science", stanford));
+        log.info("Created {} faculties total", facultyRepository.count());
+
         // 2. Create Users
         log.info("Creating Users...");
         User adminUser = userRepository.save(createUser("Admin", "User", "richardmogou@app.com", "password", Role.ADMIN, true));
-        User facultyUser1 = userRepository.save(createUser("Alice", "Professor", "alice.prof@university.edu", "password", Role.FACULTY, true));
-        User facultyUser2 = userRepository.save(createUser("Bob", "Lecturer", "bob.lect@university.edu", "password", Role.FACULTY, true));
+        User facultyUser1 = userRepository.save(createFacultyUser("Alice", "Professor", "alice.prof@university.edu", "password", paris, informatiqueParis));
+        User facultyUser2 = userRepository.save(createFacultyUser("Bob", "Lecturer", "bob.lect@university.edu", "password", mit, csMit));
+        log.info("Created faculty users - Alice faculty: {}, Bob faculty: {}", 
+                facultyUser1.getFaculty() != null ? facultyUser1.getFaculty().getName() : "NULL",
+                facultyUser2.getFaculty() != null ? facultyUser2.getFaculty().getName() : "NULL");
 
         User companyUser1 = userRepository.save(createUser("Jane", "Smith", "jane.mogou@techcorp.com", "password", Role.COMPANY, true));
         User companyUser2 = userRepository.save(createUser("Peter", "Jones", "peter.jones@innovate.io", "password", Role.COMPANY, true));
         User companyUser3 = userRepository.save(createUser("Mark", "Chief", "mark.chief@financeplus.com", "password", Role.COMPANY, true));
 
 
-        User studentUser1 = userRepository.save(createUser("John", "Doe", "john.doe@student.com", "password", Role.STUDENT, true));
-        User studentUser2 = userRepository.save(createUser("Sarah", "Connor", "sarah.connor@student.com", "password", Role.STUDENT, true));
-        User studentUser3 = userRepository.save(createUser("Mike", "Student", "mike.stu@student.com", "password", Role.STUDENT, true));
+        User studentUser1 = userRepository.save(createStudentUser("John", "Doe", "john.doe@student.com", "password", paris, informatiqueParis));
+        User studentUser2 = userRepository.save(createStudentUser("Sarah", "Connor", "sarah.connor@student.com", "password", mit, csMit));
+        User studentUser3 = userRepository.save(createStudentUser("Mike", "Student", "mike.stu@student.com", "password", stanford, businessStanford));
 
         // 3. Create Companies (and link to users)
         log.info("Creating Companies...");
@@ -113,9 +134,13 @@ public class DataInitializer implements CommandLineRunner {
 
         // 6. Create Agreements (where application was accepted)
         log.info("Creating Agreements for accepted applications...");
-        // Agreement for App 2 (Pending Faculty)
+        // Agreement for App 2 (Pending Faculty) - John Doe from informatiqueParis
         InternshipAgreement agreement2 = agreementService.createAgreementForApplication(app2.getId());
-        agreement2.setFacultyValidator(facultyUser1); // Assign faculty
+        // Alice is from informatiqueParis, same as John Doe, so she should see it
+        agreement2.setStatus(InternshipAgreementStatus.PENDING_FACULTY_VALIDATION);
+        agreement2.setSignedByStudent(false);
+        agreement2.setSignedByCompany(false);
+        agreement2.setSignedByFaculty(false);
         agreementRepository.save(agreement2);
         log.info("Created agreement ID {} for App ID {}, assigned to Faculty ID {}", agreement2.getId(), app2.getId(), facultyUser1.getId());
 
@@ -124,6 +149,11 @@ public class DataInitializer implements CommandLineRunner {
         agreement4.setFacultyValidator(facultyUser2);
         agreement4.setStatus(InternshipAgreementStatus.PENDING_ADMIN_APPROVAL); // Simulate faculty validation
         agreement4.setFacultyValidationDate(LocalDateTime.now().minusDays(1));
+        agreement4.setSignedByStudent(true);
+        agreement4.setSignedByCompany(true);
+        agreement4.setSignedByFaculty(false);
+        agreement4.setStudentSignatureDate(LocalDateTime.now().minusDays(2));
+        agreement4.setCompanySignatureDate(LocalDateTime.now().minusDays(1));
         agreementRepository.save(agreement4); // Save after faculty step
         agreement4.setAdminApprover(adminUser);
         agreement4.setStatus(InternshipAgreementStatus.APPROVED); // Simulate admin approval
@@ -145,6 +175,46 @@ public class DataInitializer implements CommandLineRunner {
         user.setRole(role);
         user.setEnabled(enabled);
         return user;
+    }
+
+    private User createStudentUser(String firstName, String lastName, String email, String password, School school, Faculty faculty) {
+        User user = new User();
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setRole(Role.STUDENT);
+        user.setEnabled(true);
+        user.setSchool(school);
+        user.setFaculty(faculty);
+        return user;
+    }
+
+    private User createFacultyUser(String firstName, String lastName, String email, String password, School school, Faculty faculty) {
+        User user = new User();
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setRole(Role.FACULTY);
+        user.setEnabled(true);
+        user.setSchool(school);
+        user.setFaculty(faculty);
+        return user;
+    }
+
+    private School createSchool(String name, String description) {
+        School school = new School();
+        school.setName(name);
+        school.setDescription(description);
+        return school;
+    }
+
+    private Faculty createFaculty(String name, School school) {
+        Faculty faculty = new Faculty();
+        faculty.setName(name);
+        faculty.setSchool(school);
+        return faculty;
     }
 
     private Company createCompany(String name, String description, String website, String address, Sector sector, User contact) {
@@ -205,5 +275,35 @@ public class DataInitializer implements CommandLineRunner {
         app.setApplicationDate(LocalDateTime.now().minusDays(5)); // Simulate past application date
         app.setCompanyFeedback(feedback);
         return app;
+    }
+    
+    private void fixFacultyAssignments() {
+        log.info("Fixing faculty assignments for existing users...");
+        
+        // Find Alice and assign her to informatique faculty
+        userRepository.findByEmail("alice.prof@university.edu").ifPresent(alice -> {
+            if (alice.getFaculty() == null) {
+                facultyRepository.findByName("Informatique").ifPresent(informatique -> {
+                    alice.setFaculty(informatique);
+                    userRepository.save(alice);
+                    log.info("Assigned Alice to Informatique faculty");
+                });
+            } else {
+                log.info("Alice already has faculty: {}", alice.getFaculty().getName());
+            }
+        });
+        
+        // Find John Doe and assign him to informatique faculty
+        userRepository.findByEmail("john.doe@student.com").ifPresent(john -> {
+            if (john.getFaculty() == null) {
+                facultyRepository.findByName("Informatique").ifPresent(informatique -> {
+                    john.setFaculty(informatique);
+                    userRepository.save(john);
+                    log.info("Assigned John Doe to Informatique faculty");
+                });
+            } else {
+                log.info("John Doe already has faculty: {}", john.getFaculty().getName());
+            }
+        });
     }
 }

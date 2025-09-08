@@ -26,13 +26,10 @@ public class InternshipOfferResponse {
     private InternshipOfferStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
-    // Include basic company info
     private Long companyId;
     private String companyName;
-    private String companyWebsite; // Optional, but useful for students
+    private String companyWebsite; 
 
-    // Factory method to convert InternshipOffer entity to DTO
     public static InternshipOfferResponse fromEntity(InternshipOffer offer) {
         if (offer == null) {
             return null;

@@ -3,6 +3,7 @@ package com.richardmogou.service;
 import com.richardmogou.dto.CompanyResponse;
 import com.richardmogou.dto.CompanyUpdateRequest;
 import com.richardmogou.entity.Company;
+import com.richardmogou.enums.CompanyStatus;
 import com.richardmogou.exception.BadRequestException;
 import com.richardmogou.exception.ResourceNotFoundException;
 import com.richardmogou.repository.CompanyRepository;
@@ -119,5 +120,47 @@ public class AdminCompanyService {
              log.error("Error deleting company ID {} by admin. It might have associated records.", companyId, e);
              throw new BadRequestException("Cannot delete company ID " + companyId + " as it may have associated records (offers, applications). Consider disabling instead.");
          }
+     }
+
+     /**
+     * Approve a company by setting its status to ACTIVE.
+     */
+     @Transactional
+     public void approveCompany(Long companyId) {
+         log.info("Admin request to approve company ID: {}", companyId);
+         Company company = companyRepository.findById(companyId)
+                 .orElseThrow(() -> new ResourceNotFoundException("Company", "id", companyId));
+         
+         company.setStatus(CompanyStatus.ACTIVE);
+         companyRepository.save(company);
+         log.info("Admin successfully approved company ID: {}", companyId);
+     }
+
+     /**
+     * Suspend a company by setting its status to SUSPENDED.
+     */
+     @Transactional
+     public void suspendCompany(Long companyId) {
+         log.info("Admin request to suspend company ID: {}", companyId);
+         Company company = companyRepository.findById(companyId)
+                 .orElseThrow(() -> new ResourceNotFoundException("Company", "id", companyId));
+         
+         company.setStatus(CompanyStatus.SUSPENDED);
+         companyRepository.save(company);
+         log.info("Admin successfully suspended company ID: {}", companyId);
+     }
+
+     /**
+     * Activate a company by setting its status to ACTIVE.
+     */
+     @Transactional
+     public void activateCompany(Long companyId) {
+         log.info("Admin request to activate company ID: {}", companyId);
+         Company company = companyRepository.findById(companyId)
+                 .orElseThrow(() -> new ResourceNotFoundException("Company", "id", companyId));
+         
+         company.setStatus(CompanyStatus.ACTIVE);
+         companyRepository.save(company);
+         log.info("Admin successfully activated company ID: {}", companyId);
      }
 }

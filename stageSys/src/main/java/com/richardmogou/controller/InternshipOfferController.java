@@ -85,30 +85,7 @@ public class InternshipOfferController {
         }
     }
 
-    /**
-     * GET /api/companies/me/offers : List offers created by the logged-in company user.
-     * Requires COMPANY role.
-     * Note: Could also be placed under /api/offers?company=me, but this follows the spec.
-     */
-    @GetMapping("/companies/me/offers")
-    @PreAuthorize("hasRole('COMPANY')")
-     public ResponseEntity<?> getOffersForCurrentCompany(
-             @PageableDefault(size = 10) Pageable pageable) {
-        log.info("Received request to list offers for current company");
-         try {
-             Page<InternshipOfferResponse> offerPage = internshipOfferService.getOffersForCurrentCompany(pageable);
-             return ResponseEntity.ok(offerPage);
-         } catch (ResourceNotFoundException e) { // If company not found for user
-             log.warn("Could not list offers for current company: {}", e.getMessage());
-             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-         } catch (IllegalStateException e) { // If user context is wrong
-             log.warn("Offer listing failed due to illegal state: {}", e.getMessage());
-             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication context error.");
-         } catch (Exception e) {
-             log.error("Error fetching offers for current company", e);
-             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while fetching company offers.");
-         }
-    }
+
 
 
     /**

@@ -4,11 +4,16 @@ import com.richardmogou.dto.CompanyRegistrationRequest;
 import com.richardmogou.dto.JwtAuthenticationResponse;
 import com.richardmogou.dto.LoginRequest;
 import com.richardmogou.dto.StudentRegistrationRequest;
+import com.richardmogou.dto.SchoolRegistrationRequest;
 import com.richardmogou.entity.Company;
 import com.richardmogou.entity.User;
+import com.richardmogou.entity.School;
+import com.richardmogou.entity.Faculty;
 import com.richardmogou.entity.enums.Role;
 import com.richardmogou.repository.CompanyRepository;
 import com.richardmogou.repository.UserRepository;
+import com.richardmogou.repository.SchoolRepository;
+import com.richardmogou.repository.FacultyRepository;
 import com.richardmogou.service.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -31,6 +36,8 @@ public class AuthenticationService {
 
     private final UserRepository userRepository;
     private final CompanyRepository companyRepository;
+    private final SchoolRepository schoolRepository;
+    private final FacultyRepository facultyRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
@@ -51,12 +58,82 @@ public class AuthenticationService {
         user.setRole(Role.STUDENT);
         user.setEnabled(true); // Or set to false if email verification is needed
         user.setPhoneNumber(request.getPhoneNumber());
+        
+        School school = schoolRepository.findById(request.getSchoolId())
+                .orElseThrow(() -> new IllegalArgumentException("School not found"));
+        Faculty faculty = facultyRepository.findById(request.getFacultyId())
+                .orElseThrow(() -> new IllegalArgumentException("Faculty not found"));
+        
+        user.setSchool(school);
+        user.setFaculty(faculty);
 
         User savedUser = userRepository.save(user);
         log.info("Student registered successfully with ID: {}", savedUser.getId());
 
         // Generate token upon successful registration
         // Note: Spring Security UserDetails uses username, which is email here
+        SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + savedUser.getRole().name());
+        org.springframework.security.core.userdetails.User userDetails =
+                new org.springframework.security.core.userdetails.User(savedUser.getEmail(), savedUser.getPassword(), Collections.singletonList(authority));
+
+        String jwtToken = jwtService.generateToken(userDetails);
+        return JwtAuthenticationResponse.builder()
+                .token(jwtToken)
+                .userId(savedUser.getId())
+                .email(savedUser.getEmail())
+                .role(savedUser.getRole())
+                .build();
+    }
+
+    @Transactional // Ensure atomicity
+    public JwtAuthenticationResponse registerSchool(SchoolRegistrationRequest request) {
+        log.info("Registering new school with email: {}", request.getContactEmail());
+        if (userRepository.existsByEmail(request.getContactEmail())) {
+            log.warn("Registration failed: Contact email already exists - {}", request.getContactEmail());
+            throw new IllegalArgumentException("Contact email address already in use.");
+        }
+        if (schoolRepository.existsByName(request.getSchoolName())) {
+            log.warn("Registration failed: School name already exists - {}", request.getSchoolName());
+            throw new IllegalArgumentException("School name already exists.");
+        }
+
+        // 1. Create the User (School Contact)
+        User user = new User();
+        user.setFirstName(request.getContactFirstName());
+        user.setLastName(request.getContactLastName());
+        user.setEmail(request.getContactEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole(Role.FACULTY);
+        user.setEnabled(true);
+        User savedUser = userRepository.save(user);
+        log.info("School contact user registered successfully with ID: {}", savedUser.getId());
+
+        // 2. Create the School
+        School school = new School();
+        school.setName(request.getSchoolName());
+        school.setDescription(request.getSchoolDescription());
+        school.setAddress(request.getSchoolAddress());
+        school.setWebsite(request.getSchoolWebsite());
+        School savedSchool = schoolRepository.save(school);
+        log.info("School registered successfully with ID: {}", savedSchool.getId());
+
+        // 3. Create Faculties
+        if (request.getFacultyNames() != null && !request.getFacultyNames().isEmpty()) {
+            for (String facultyName : request.getFacultyNames()) {
+                if (facultyName != null && !facultyName.trim().isEmpty()) {
+                    Faculty faculty = new Faculty();
+                    faculty.setName(facultyName.trim());
+                    faculty.setSchool(savedSchool);
+                    Faculty savedFaculty = facultyRepository.save(faculty);
+                    log.info("Created faculty '{}' with ID {} for school {}", savedFaculty.getName(), savedFaculty.getId(), savedSchool.getName());
+                }
+            }
+            log.info("Created {} faculties for school {}", request.getFacultyNames().size(), savedSchool.getName());
+        } else {
+            log.warn("No faculties provided for school {}", savedSchool.getName());
+        }
+
+        // Generate token
         SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + savedUser.getRole().name());
         org.springframework.security.core.userdetails.User userDetails =
                 new org.springframework.security.core.userdetails.User(savedUser.getEmail(), savedUser.getPassword(), Collections.singletonList(authority));

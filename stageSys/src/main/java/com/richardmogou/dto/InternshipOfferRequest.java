@@ -31,9 +31,5 @@ public class InternshipOfferRequest {
     // @FutureOrPresent(message = "Start date must be in the present or future") // Uncomment if validation needed
     private LocalDate startDate; // Optional
 
-    // Status is usually set internally (e.g., DRAFT or OPEN), not directly by request on creation
-    // @NotNull(message = "Status cannot be null")
-    // private InternshipOfferStatus status = InternshipOfferStatus.DRAFT;
-
-    // Company ID is derived from the authenticated user, not passed in request body
+   
 }

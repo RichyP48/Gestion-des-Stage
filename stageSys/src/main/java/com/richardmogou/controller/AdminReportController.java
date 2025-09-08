@@ -22,7 +22,7 @@ import java.util.Date;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/admin/reports")
+@RequestMapping("/api/admin")
 @PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
 public class AdminReportController {
@@ -32,11 +32,87 @@ public class AdminReportController {
     // Inject services for stats endpoints later
 
     /**
+     * GET /api/admin/reports : Get comprehensive admin reports data.
+     */
+    @GetMapping("/reports")
+    public ResponseEntity<?> getReports(@RequestParam(defaultValue = "month") String period) {
+        log.info("Admin request for reports with period: {}", period);
+        
+        // Mock data for now - replace with actual service calls
+        Map<String, Object> reportData = Map.of(
+            "systemStats", Map.of(
+                "totalUsers", 456,
+                "totalStudents", 245,
+                "totalCompanies", 67,
+                "totalFaculty", 23,
+                "totalOffers", 189,
+                "totalApplications", 567,
+                "totalAgreements", 234
+            ),
+            "userActivity", Map.of(
+                "dailyLogins", 89,
+                "weeklyLogins", 234,
+                "monthlyLogins", 1245
+            ),
+            "platformUsage", java.util.List.of(
+                Map.of("month", "Janvier", "users", 234, "offers", 45, "applications", 123),
+                Map.of("month", "Février", "users", 267, "offers", 52, "applications", 145),
+                Map.of("month", "Mars", "users", 289, "offers", 48, "applications", 167),
+                Map.of("month", "Avril", "users", 312, "offers", 61, "applications", 189),
+                Map.of("month", "Mai", "users", 345, "offers", 58, "applications", 201)
+            ),
+            "topCompanies", java.util.List.of(
+                Map.of("name", "TechCorp Solutions", "offers", 25, "applications", 89, "rating", 4.8),
+                Map.of("name", "InnovateLab", "offers", 18, "applications", 67, "rating", 4.6),
+                Map.of("name", "DataSolutions Inc", "offers", 15, "applications", 54, "rating", 4.4),
+                Map.of("name", "WebAgency Pro", "offers", 12, "applications", 43, "rating", 4.2),
+                Map.of("name", "StartupXYZ", "offers", 10, "applications", 38, "rating", 4.0)
+            ),
+            "systemHealth", Map.of(
+                "uptime", 99.8,
+                "responseTime", 245,
+                "errorRate", 0.2,
+                "storage", 67
+            ),
+            "agreementStats", Map.of(
+                "totalAgreements", 234,
+                "pendingAgreements", 45,
+                "approvedAgreements", 189,
+                "rejectedAgreements", 12,
+                "signedAgreements", 156
+            )
+        );
+        
+        return ResponseEntity.ok(reportData);
+    }
+
+    /**
+     * GET /api/admin/reports/export : Export admin report as PDF.
+     */
+    @GetMapping("/reports/export")
+    public ResponseEntity<Resource> exportReport(@RequestParam(defaultValue = "month") String period) {
+        log.info("Admin request to export report for period: {}", period);
+        
+        // Mock PDF export - replace with actual implementation
+        String mockPdf = "Mock PDF content for period: " + period;
+        ByteArrayInputStream in = new ByteArrayInputStream(mockPdf.getBytes());
+        Resource resource = new InputStreamResource(in);
+        
+        String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String filename = "rapport-admin-" + period + "-" + timestamp + ".pdf";
+        
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(resource);
+    }
+
+    /**
      * GET /api/admin/reports/internships/export : Export internship data as Excel.
      */
-    @GetMapping("/internships/export")
+    @GetMapping("/reports/internships/export")
     public ResponseEntity<Resource> exportInternshipsToExcel(
-            @RequestParam(required = false) Map<String, String> filters) { // Capture filters like ?major=..., ?status=...
+            @RequestParam(required = false) Map<String, String> filters) {
 
         log.info("Admin request to export internships to Excel with filters: {}", filters);
         try {
@@ -68,7 +144,7 @@ public class AdminReportController {
      * GET /api/admin/reports/stats/internships-by-major : Get aggregated data for charts.
      * TODO: Implement this endpoint. Requires aggregation query in repository/service.
      */
-    @GetMapping("/stats/internships-by-major")
+    @GetMapping("/reports/stats/internships-by-major")
     public ResponseEntity<?> getStatsInternshipsByMajor() {
         log.info("Admin request for internships-by-major stats");
         // TODO: Implement service logic to query and aggregate data
@@ -81,7 +157,7 @@ public class AdminReportController {
      * GET /api/admin/reports/stats/agreement-status : Get counts of agreements by status.
      * TODO: Implement this endpoint. Requires aggregation query in repository/service.
      */
-    @GetMapping("/stats/agreement-status")
+    @GetMapping("/reports/stats/agreement-status")
     public ResponseEntity<?> getStatsAgreementStatus() {
          log.info("Admin request for agreement-status stats");
          // TODO: Implement service logic to query and aggregate data
