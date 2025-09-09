@@ -18,9 +18,12 @@ interface Agreement {
   signedByStudent?: boolean;
   signedByCompany?: boolean;
   signedByFaculty?: boolean;
+  approvedByAdmin?: boolean;
   studentSignatureDate?: string;
   companySignatureDate?: string;
   facultySignatureDate?: string;
+  adminApprovalDate?: string;
+  facultyValidationDate?: string;
 }
 
 @Component({
@@ -66,25 +69,35 @@ interface Agreement {
             </div>
             
             <div class="mb-4">
-              <p class="text-sm font-medium text-gray-700 mb-2">Signatures</p>
-              <div class="flex space-x-4">
+              <p class="text-sm font-medium text-gray-700 mb-2">Approbations & Signatures</p>
+              <div class="grid grid-cols-2 gap-4">
                 <div class="flex items-center">
-                  <svg [ngClass]="agreement.signedByStudent ? 'text-green-500' : 'text-gray-300'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <svg [ngClass]="getApprovalStatus(agreement, 'student') ? 'text-green-500' : 'text-gray-300'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                   </svg>
                   <span class="text-sm text-gray-600">Étudiant</span>
+                  <span *ngIf="agreement.studentSignatureDate" class="text-xs text-gray-500 ml-1">({{agreement.studentSignatureDate | date:'dd/MM'}})</span>
                 </div>
                 <div class="flex items-center">
-                  <svg [ngClass]="agreement.signedByCompany ? 'text-green-500' : 'text-gray-300'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <svg [ngClass]="getApprovalStatus(agreement, 'company') ? 'text-green-500' : 'text-gray-300'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                   </svg>
                   <span class="text-sm text-gray-600">Entreprise</span>
+                  <span *ngIf="agreement.companySignatureDate" class="text-xs text-gray-500 ml-1">({{agreement.companySignatureDate | date:'dd/MM'}})</span>
                 </div>
                 <div class="flex items-center">
-                  <svg [ngClass]="agreement.signedByFaculty ? 'text-green-500' : 'text-gray-300'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <svg [ngClass]="getApprovalStatus(agreement, 'faculty') ? 'text-green-500' : 'text-gray-300'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                   </svg>
                   <span class="text-sm text-gray-600">Faculté</span>
+                  <span *ngIf="agreement.facultyValidationDate" class="text-xs text-gray-500 ml-1">({{agreement.facultyValidationDate | date:'dd/MM'}})</span>
+                </div>
+                <div class="flex items-center">
+                  <svg [ngClass]="getApprovalStatus(agreement, 'admin') ? 'text-green-500' : 'text-gray-300'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span class="text-sm text-gray-600">Administration</span>
+                  <span *ngIf="agreement.adminApprovalDate" class="text-xs text-gray-500 ml-1">({{agreement.adminApprovalDate | date:'dd/MM'}})</span>
                 </div>
               </div>
             </div>
@@ -241,10 +254,32 @@ export class StudentAgreementsComponent implements OnInit {
     const labels = {
       'DRAFT': 'Brouillon',
       'PENDING': 'En attente',
+      'PENDING_FACULTY_VALIDATION': 'En attente validation faculté',
+      'PENDING_ADMIN_APPROVAL': 'En attente approbation admin',
+      'APPROVED': 'Approuvée',
       'SIGNED': 'Signée',
       'ACTIVE': 'Active',
-      'COMPLETED': 'Terminée'
+      'COMPLETED': 'Terminée',
+      'REJECTED': 'Rejetée'
     };
     return labels[status as keyof typeof labels] || status;
+  }
+
+  getApprovalStatus(agreement: Agreement, party: string): boolean {
+    switch (party) {
+      case 'student':
+        return agreement.signedByStudent || false;
+      case 'company':
+        return agreement.signedByCompany || false;
+      case 'faculty':
+        return agreement.signedByFaculty || 
+               agreement.status === 'PENDING_ADMIN_APPROVAL' || 
+               agreement.status === 'APPROVED' || false;
+      case 'admin':
+        return agreement.approvedByAdmin || 
+               agreement.status === 'APPROVED' || false;
+      default:
+        return false;
+    }
   }
 }

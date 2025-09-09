@@ -208,6 +208,7 @@ onSidebarToggle(open: boolean) {
       { label: 'Mes offres', route: '/company/offers', icon: 'briefcase' },
       { label: 'Candidatures', route: '/company/applications', icon: 'users' },
       { label: 'Conventions', route: '/company/agreements', icon: 'file-check' },
+      { label: 'Rapports', route: '/company/reports', icon: 'bar-chart' },
       { label: 'Profil entreprise', route: '/profile', icon: 'building' }
     ];
   }
@@ -227,6 +228,7 @@ onSidebarToggle(open: boolean) {
       { label: 'Tableau de bord', route: '/admin/dashboard', icon: 'layout-dashboard' },
       { label: 'Utilisateurs', route: '/admin/users', icon: 'users' },
       { label: 'Entreprises', route: '/admin/companies', icon: 'building-2' },
+      { label: 'Conventions', route: '/admin/agreements', icon: 'file-check' },
       { label: 'Paramètres', route: '/admin/settings', icon: 'settings' },
       { label: 'Rapports', route: '/admin/reports', icon: 'bar-chart' }
     ];

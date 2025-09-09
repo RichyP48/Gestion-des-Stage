@@ -81,7 +81,7 @@ export class FacultyAgreementsComponent implements OnInit {
     this.loading = true;
     console.log('Loading faculty pending agreements...');
     this.agreementService.getFacultyPendingAgreements().subscribe({
-      next: (response) => {
+      next: (response: any) => {
         console.log('Faculty agreements response:', response);
         this.agreements = response.content || response || [];
         console.log('Agreements loaded:', this.agreements.length, 'agreements');
@@ -91,7 +91,7 @@ export class FacultyAgreementsComponent implements OnInit {
           console.log('No pending agreements found for this faculty');
         }
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error loading agreements:', error);
         console.error('Error status:', error.status);
         console.error('Error message:', error.message);
@@ -106,7 +106,7 @@ export class FacultyAgreementsComponent implements OnInit {
     if (!validated && !reason) return;
 
     this.agreementService.validateAgreement(agreementId, validated, reason || undefined).subscribe({
-      next: (response) => {
+      next: (response: any) => {
         console.log('Agreement validation response:', response);
         
         // Show success message using notification service
@@ -119,7 +119,7 @@ export class FacultyAgreementsComponent implements OnInit {
         // Reload the list to reflect changes
         this.loadPendingAgreements();
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error validating agreement:', error);
         this.notificationService.showError('Erreur lors de la validation de la convention');
       }
