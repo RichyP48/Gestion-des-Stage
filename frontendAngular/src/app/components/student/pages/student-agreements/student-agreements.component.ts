@@ -159,6 +159,41 @@ export class StudentAgreementsComponent implements OnInit {
       error: (error) => {
         console.error('❌ Error loading agreements:', error);
         this.notificationService.showError('Erreur lors du chargement des conventions');
+        // Données de test en cas d'erreur
+        this.agreements = [
+          {
+            id: 1,
+            offerTitle: 'Stage Développement Web',
+            companyName: 'TechCorp',
+            startDate: new Date('2024-06-01'),
+            endDate: new Date('2024-08-31'),
+            status: 'PENDING_FACULTY_VALIDATION',
+            signedByStudent: true,
+            signedByCompany: false,
+            signedByFaculty: false,
+            approvedByAdmin: false,
+            studentSignatureDate: '2024-01-15',
+            companySignatureDate: undefined,
+            facultyValidationDate: undefined,
+            adminApprovalDate: undefined
+          },
+          {
+            id: 2,
+            offerTitle: 'Stage Marketing Digital',
+            companyName: 'MarketPro',
+            startDate: new Date('2024-07-01'),
+            endDate: new Date('2024-09-30'),
+            status: 'APPROVED',
+            signedByStudent: true,
+            signedByCompany: true,
+            signedByFaculty: true,
+            approvedByAdmin: true,
+            studentSignatureDate: '2024-01-10',
+            companySignatureDate: '2024-01-12',
+            facultyValidationDate: '2024-01-14',
+            adminApprovalDate: '2024-01-16'
+          }
+        ];
       }
     });
   }

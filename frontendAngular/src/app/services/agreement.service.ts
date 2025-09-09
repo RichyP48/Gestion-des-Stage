@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 
@@ -10,7 +11,7 @@ export class AgreementService {
   constructor(private apiService: ApiService) {}
 
   getFacultyPendingAgreements(): Observable<any> {
-    return this.apiService.get('/agreements/faculty/pending');
+    return this.apiService.get('/faculty/me/agreements/pending');
   }
 
   validateAgreement(agreementId: number, validated: boolean, rejectionReason?: string): Observable<any> {
@@ -21,13 +22,12 @@ export class AgreementService {
     return this.apiService.put(`/agreements/${agreementId}/validate`, payload);
   }
 
-  getStudentAgreements(page?: number, size?: number): Observable<any> {
-    const params = page !== undefined && size !== undefined ? `?page=${page}&size=${size}` : '';
-    return this.apiService.get(`/agreements${params}`);
+  getStudentAgreements(page = 0, size = 10): Observable<any> {
+    return this.apiService.get(`/students/me/agreements?page=${page}&size=${size}`);
   }
 
   downloadAgreementPdf(agreementId: number): Observable<Blob> {
-    return this.apiService.getBlob(`/agreements/${agreementId}/pdf`);
+    return this.apiService.get(`/agreements/${agreementId}/pdf`, new HttpParams(), 'blob');
   }
 
   signAgreement(agreementId: number): Observable<any> {
@@ -48,5 +48,13 @@ export class AgreementService {
 
   approveAgreement(agreementId: number, approvalData: any): Observable<any> {
     return this.apiService.put(`/agreements/${agreementId}/approve`, approvalData);
+  }
+
+  getCompanyAgreements(page = 0, size = 10): Observable<any> {
+    return this.apiService.get(`/companies/me/agreements?page=${page}&size=${size}`);
+  }
+
+  signAgreementAsCompany(agreementId: number): Observable<any> {
+    return this.apiService.put(`/agreements/${agreementId}/sign-company`, {});
   }
 }

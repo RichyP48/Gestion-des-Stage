@@ -97,6 +97,25 @@ export class FacultyAgreementsComponent implements OnInit {
         console.error('Error message:', error.message);
         this.notificationService.showError('Erreur lors du chargement des conventions');
         this.loading = false;
+        // Données de test en cas d'erreur
+        this.agreements = [
+          {
+            id: 1,
+            studentName: 'Jean Dupont',
+            companyName: 'TechCorp',
+            offerTitle: 'Stage Développement Web',
+            createdAt: '2024-01-15T10:00:00Z',
+            status: 'PENDING_FACULTY_VALIDATION'
+          },
+          {
+            id: 2,
+            studentName: 'Marie Martin',
+            companyName: 'MarketPro',
+            offerTitle: 'Stage Marketing Digital',
+            createdAt: '2024-01-16T14:30:00Z',
+            status: 'PENDING_FACULTY_VALIDATION'
+          }
+        ];
       }
     });
   }

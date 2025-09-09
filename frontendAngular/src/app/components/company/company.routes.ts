@@ -35,6 +35,6 @@ export const COMPANY_ROUTES: Routes = [
   },
   {
     path: 'reports',
-    loadComponent: () => import('./pages/company-dashboard/company-dashboard.component').then(m => m.CompanyDashboardComponent)
+    loadComponent: () => import('./pages/company-reports/company-reports.component').then(m => m.CompanyReportsComponent)
   }
 ];

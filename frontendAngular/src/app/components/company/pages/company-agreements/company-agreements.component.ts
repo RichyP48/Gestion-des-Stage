@@ -43,25 +43,35 @@ import { NotificationService } from '../../../../services/notification.service';
           </div>
           
           <div class="mb-4">
-            <p class="text-sm font-medium text-gray-700 mb-2">État des signatures</p>
-            <div class="flex space-x-4">
+            <p class="text-sm font-medium text-gray-700 mb-2">Approbations & Signatures</p>
+            <div class="grid grid-cols-2 gap-4">
               <div class="flex items-center">
-                <svg [ngClass]="agreement.signedByStudent ? 'text-green-500' : 'text-gray-300'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <svg [ngClass]="getApprovalStatus(agreement, 'student') ? 'text-green-500' : 'text-gray-300'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                 </svg>
                 <span class="text-sm text-gray-600">Étudiant</span>
+                <span *ngIf="agreement.studentSignatureDate" class="text-xs text-gray-500 ml-1">({{agreement.studentSignatureDate | date:'dd/MM'}})</span>
               </div>
               <div class="flex items-center">
-                <svg [ngClass]="agreement.signedByCompany ? 'text-green-500' : 'text-gray-300'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <svg [ngClass]="getApprovalStatus(agreement, 'company') ? 'text-green-500' : 'text-gray-300'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                 </svg>
                 <span class="text-sm text-gray-600">Entreprise</span>
+                <span *ngIf="agreement.companySignatureDate" class="text-xs text-gray-500 ml-1">({{agreement.companySignatureDate | date:'dd/MM'}})</span>
               </div>
               <div class="flex items-center">
-                <svg [ngClass]="agreement.signedByFaculty ? 'text-green-500' : 'text-gray-300'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <svg [ngClass]="getApprovalStatus(agreement, 'faculty') ? 'text-green-500' : 'text-gray-300'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                 </svg>
                 <span class="text-sm text-gray-600">Faculté</span>
+                <span *ngIf="agreement.facultyValidationDate" class="text-xs text-gray-500 ml-1">({{agreement.facultyValidationDate | date:'dd/MM'}})</span>
+              </div>
+              <div class="flex items-center">
+                <svg [ngClass]="getApprovalStatus(agreement, 'admin') ? 'text-green-500' : 'text-gray-300'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="text-sm text-gray-600">Administration</span>
+                <span *ngIf="agreement.adminApprovalDate" class="text-xs text-gray-500 ml-1">({{agreement.adminApprovalDate | date:'dd/MM'}})</span>
               </div>
             </div>
           </div>
@@ -96,7 +106,7 @@ export class CompanyAgreementsComponent implements OnInit {
   loadAgreements(): void {
     this.loading = true;
     // For now, use the general endpoint - in a real app, you'd have a company-specific endpoint
-    this.agreementService.getAgreementsForCurrentStudent(0, 50).subscribe({
+    this.agreementService.getCompanyAgreements(0, 50).subscribe({
       next: (response: any) => {
         this.agreements = response.content || response || [];
         this.loading = false;
@@ -105,12 +115,43 @@ export class CompanyAgreementsComponent implements OnInit {
         console.error('Error loading agreements:', error);
         this.notificationService.showError('Erreur lors du chargement des conventions');
         this.loading = false;
+        // Données de test en cas d'erreur
+        this.agreements = [
+          {
+            id: 1,
+            offerTitle: 'Stage Développement Web',
+            studentName: 'Jean Dupont',
+            status: 'PENDING_ADMIN_APPROVAL',
+            signedByStudent: true,
+            signedByCompany: false,
+            signedByFaculty: true,
+            approvedByAdmin: false,
+            studentSignatureDate: '2024-01-15',
+            companySignatureDate: undefined,
+            facultyValidationDate: '2024-01-17',
+            adminApprovalDate: undefined
+          },
+          {
+            id: 2,
+            offerTitle: 'Stage Marketing Digital',
+            studentName: 'Marie Martin',
+            status: 'APPROVED',
+            signedByStudent: true,
+            signedByCompany: true,
+            signedByFaculty: true,
+            approvedByAdmin: true,
+            studentSignatureDate: '2024-01-10',
+            companySignatureDate: '2024-01-12',
+            facultyValidationDate: '2024-01-14',
+            adminApprovalDate: '2024-01-16'
+          }
+        ];
       }
     });
   }
 
   signAgreement(agreement: any): void {
-    this.agreementService.signAgreement(agreement.id).subscribe({
+    this.agreementService.signAgreementAsCompany(agreement.id).subscribe({
       next: (updatedAgreement: any) => {
         agreement.signedByCompany = true;
         agreement.companySignatureDate = new Date();
@@ -161,5 +202,23 @@ export class CompanyAgreementsComponent implements OnInit {
       'REJECTED': 'Rejetée'
     };
     return labels[status as keyof typeof labels] || status;
+  }
+
+  getApprovalStatus(agreement: any, party: string): boolean {
+    switch (party) {
+      case 'student':
+        return agreement.signedByStudent || false;
+      case 'company':
+        return agreement.signedByCompany || false;
+      case 'faculty':
+        return agreement.signedByFaculty || 
+               agreement.status === 'PENDING_ADMIN_APPROVAL' || 
+               agreement.status === 'APPROVED' || false;
+      case 'admin':
+        return agreement.approvedByAdmin || 
+               agreement.status === 'APPROVED' || false;
+      default:
+        return false;
+    }
   }
 }

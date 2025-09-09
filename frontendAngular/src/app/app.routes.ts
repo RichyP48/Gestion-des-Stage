@@ -42,7 +42,8 @@ export const routes: Routes = [
       { path: 'dashboard', loadComponent: () => import('./components/company/pages/company-dashboard/company-dashboard.component').then(m => m.CompanyDashboardComponent) },
       { path: 'offers', loadComponent: () => import('./components/company/company-offers/company-offers.component').then(m => m.CompanyOffersComponent) },
       { path: 'applications', loadComponent: () => import('./components/company/pages/company-applications/company-applications.component').then(m => m.CompanyApplicationsComponent) }, 
-      { path: 'agreements', loadComponent: () => import('./components/company/pages/company-dashboard/company-dashboard.component').then(m => m.CompanyDashboardComponent) }
+      { path: 'agreements', loadComponent: () => import('./components/company//pages/company-agreements/company-agreements.component').then(m => m.CompanyAgreementsComponent)},
+      { path: 'reports', loadComponent: () => import('./components/company/pages/company-reports/company-reports.component').then(m => m.CompanyReportsComponent)},
     ]
   },
   {
