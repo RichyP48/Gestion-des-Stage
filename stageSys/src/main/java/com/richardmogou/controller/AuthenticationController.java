@@ -4,6 +4,7 @@ import com.richardmogou.dto.CompanyRegistrationRequest;
 import com.richardmogou.dto.JwtAuthenticationResponse;
 import com.richardmogou.dto.LoginRequest;
 import com.richardmogou.dto.StudentRegistrationRequest;
+import com.richardmogou.dto.SchoolRegistrationRequest;
 import com.richardmogou.service.AuthenticationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -53,6 +54,23 @@ public class AuthenticationController {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
             log.error("Unexpected error during company registration for {}", request.getCompanyName(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
+        }
+    }
+
+    @PostMapping("/register/school")
+    public ResponseEntity<?> registerSchool(@Valid @RequestBody SchoolRegistrationRequest request) {
+        log.info("Received request to register school: {} with {} faculties", request.getSchoolName(), 
+                request.getFacultyNames() != null ? request.getFacultyNames().size() : 0);
+        log.debug("Faculty names: {}", request.getFacultyNames());
+        try {
+            JwtAuthenticationResponse response = authenticationService.registerSchool(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (IllegalArgumentException e) {
+            log.warn("School registration failed for {}: {}", request.getSchoolName(), e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            log.error("Unexpected error during school registration for {}", request.getSchoolName(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
         }
     }

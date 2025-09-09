@@ -41,10 +41,10 @@ export class AdminCompanyComponent implements OnInit {
   loadCompanies() {
     this.loading = true
 
-    this.apiService.get<Company[]>("/admin/companies").subscribe({
-      next: (companies) => {
-        this.companies = companies
-        this.filteredCompanies = companies
+    this.apiService.get<any>("/admin/companies?size=1000").subscribe({
+      next: (response) => {
+        this.companies = response.content || []
+        this.filteredCompanies = this.companies
         this.calculateStats()
         this.loading = false
       },

@@ -2,6 +2,7 @@ package com.richardmogou.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,4 +27,10 @@ public class StudentRegistrationRequest {
     private String password;
 
     private String phoneNumber; // Optional
+
+    @NotNull(message = "School ID cannot be null")
+    private Long schoolId;
+
+    @NotNull(message = "Faculty ID cannot be null")
+    private Long facultyId;
 }

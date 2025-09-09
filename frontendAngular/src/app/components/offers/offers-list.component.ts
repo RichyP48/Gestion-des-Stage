@@ -270,7 +270,7 @@ export class OffersListComponent implements OnInit {
         console.error('Erreur complète:', error);
         console.error('Status:', error.status);
         console.error('Message:', error.message);
-        this.notificationService.error('Erreur lors du chargement des offres: ' + error.message);
+        this.notificationService.showError('Erreur lors du chargement des offres: ' + error.message);
       }
     });
   }
@@ -327,12 +327,12 @@ export class OffersListComponent implements OnInit {
       dummyCv
     ).subscribe({
       next: () => {
-        this.notificationService.success('Candidature envoyée avec succès');
+        this.notificationService.showSuccess('Candidature envoyée avec succès');
         this.closeApplicationModal();
       },
       error: (error) => {
         console.error('Erreur:', error);
-        this.notificationService.error('Erreur lors de l\'envoi de la candidature');
+        this.notificationService.showError('Erreur lors de l\'envoi de la candidature');
       }
     });
   }

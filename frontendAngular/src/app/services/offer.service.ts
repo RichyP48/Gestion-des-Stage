@@ -2,8 +2,30 @@ import { Injectable } from '@angular/core';
 import { HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
-import { InternshipOffer, InternshipOfferRequest, OfferStatusUpdateRequest } from '../models/offer.model';
+export interface InternshipOffer {
+  id: number;
+  title: string;
+  description: string;
+  location: string;
+  duration: number;
+  status: string;
+  createdAt: string;
+  applicationCount?: number;
+}
 
+export interface InternshipOfferRequest {
+  title: string;
+  description: string;
+  requiredSkills: string;
+  domain: string;
+  location: string;
+  duration: number;
+  startDate: string;
+}
+
+export interface OfferStatusUpdateRequest {
+  status: string;
+}
 @Injectable({
   providedIn: 'root'
 })
@@ -23,8 +45,7 @@ export class OfferService {
     status?: string,
     companyId?: number,
     skill?: string,
-    search?: string,
-    companyName?: string
+    search?: string
   ): Observable<any> {
     let params = new HttpParams()
       .set('page', page.toString())
@@ -38,7 +59,6 @@ export class OfferService {
     if (companyId) params = params.set('companyId', companyId.toString());
     if (skill) params = params.set('skill', skill);
     if (search) params = params.set('search', search);
-    if (companyName) params= params.set('companyName', companyName)
     
     return this.apiService.get<any>('/offers', params);
   }

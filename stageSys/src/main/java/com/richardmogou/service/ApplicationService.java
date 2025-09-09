@@ -37,7 +37,7 @@ public class ApplicationService {
     private final UserService userService;
     private final CompanyService companyService;
     private final FileStorageService fileStorageService;
-    // private final NotificationService notificationService; // Inject later for notifications
+    private final ApplicationNotificationService applicationNotificationService;
 
     /**
      * Submits a new application for an internship offer.
@@ -81,7 +81,12 @@ public class ApplicationService {
         Application savedApplication = applicationRepository.save(application);
         log.info("Application submitted successfully with ID: {}", savedApplication.getId());
 
-        // TODO: Trigger notification to the company
+        // Send notification to company
+        try {
+            applicationNotificationService.notifyNewApplication(savedApplication);
+        } catch (Exception e) {
+            log.error("Error sending new application notification", e);
+        }
 
         return ApplicationResponse.fromEntity(savedApplication);
     }
@@ -203,12 +208,19 @@ public class ApplicationService {
          }
 
 
+        ApplicationStatus oldStatus = application.getStatus();
         application.setStatus(request.getStatus());
         application.setCompanyFeedback(request.getFeedback());
         Application updatedApplication = applicationRepository.save(application);
         log.info("Application ID {} status updated to {} by company ID: {}", applicationId, request.getStatus(), currentCompany.getId());
 
-        // TODO: Trigger notification to the student about the status update.
+        // Send notification to student about status update
+        try {
+            applicationNotificationService.notifyApplicationStatusChange(updatedApplication, oldStatus, request.getStatus());
+        } catch (Exception e) {
+            log.error("Error sending application status change notification", e);
+        }
+
         // TODO: If status is ACCEPTED, potentially trigger agreement creation process.
 
         return ApplicationResponse.fromEntity(updatedApplication);

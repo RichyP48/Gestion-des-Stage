@@ -8,6 +8,7 @@ import com.richardmogou.entity.InternshipAgreement;
 import com.richardmogou.entity.User;
 import com.richardmogou.entity.enums.ApplicationStatus;
 import com.richardmogou.entity.enums.InternshipAgreementStatus;
+import com.richardmogou.entity.enums.NotificationType;
 import com.richardmogou.entity.enums.Role;
 import com.richardmogou.exception.BadRequestException;
 import com.richardmogou.exception.ResourceNotFoundException;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +40,7 @@ public class InternshipAgreementService {
     private final UserRepository userRepository; // To find faculty/admin users
     private final UserService userService; // To get current user
     private final PdfGenerationService pdfGenerationService;
-    // private final NotificationService notificationService; // Inject later
+    private final NotificationService notificationService;
 
     /**
      * Creates an Internship Agreement when an application is accepted.
@@ -95,7 +97,8 @@ public class InternshipAgreementService {
         application.setStatus(ApplicationStatus.AWAITING_AGREEMENT);
         applicationRepository.save(application);
 
-        // TODO: Trigger notification to assigned faculty (if any) and student.
+        // Notify all stakeholders about new agreement
+        notifyNewAgreement(savedAgreement);
 
         return savedAgreement;
     }
@@ -137,7 +140,24 @@ public class InternshipAgreementService {
         if (currentFaculty.getRole() != Role.FACULTY) {
             throw new UnauthorizedAccessException("User does not have FACULTY role.");
         }
-        log.debug("Fetching agreements pending validation for faculty ID: {}", currentFaculty.getId());
+        
+        log.info("Fetching agreements pending validation for faculty: {}", currentFaculty.getEmail());
+        
+        // Debug: Check faculty assignment
+        User facultyWithFaculty = userRepository.findByEmail(currentFaculty.getEmail()).orElse(null);
+        if (facultyWithFaculty != null && facultyWithFaculty.getFaculty() != null) {
+            log.info("Faculty {} belongs to faculty: {} (ID: {})", 
+                    currentFaculty.getEmail(), 
+                    facultyWithFaculty.getFaculty().getName(), 
+                    facultyWithFaculty.getFaculty().getId());
+        } else {
+            log.warn("Faculty {} has no faculty assigned!", currentFaculty.getEmail());
+        }
+        
+        // Debug: Check all agreements
+        long totalAgreements = agreementRepository.count();
+        long pendingAgreements = agreementRepository.findByStatus(InternshipAgreementStatus.PENDING_FACULTY_VALIDATION, Pageable.unpaged()).getTotalElements();
+        log.info("Total agreements in DB: {}, Pending faculty validation: {}", totalAgreements, pendingAgreements);
         
         // Apply default sorting if no sort is specified
         if (pageable.getSort().isUnsorted()) {
@@ -145,9 +165,11 @@ public class InternshipAgreementService {
                 Sort.by(Sort.Direction.ASC, "createdAt"));
         }
         
-        // This assumes faculty is assigned directly. If based on department/student, logic needs adjustment.
-        Page<InternshipAgreement> agreementPage = agreementRepository.findByFacultyValidatorAndStatus(
-                currentFaculty, InternshipAgreementStatus.PENDING_FACULTY_VALIDATION, pageable);
+        // Use custom query to find agreements by faculty email
+        Page<InternshipAgreement> agreementPage = agreementRepository.findAgreementsByFacultyEmailAndStatus(
+                currentFaculty.getEmail(), InternshipAgreementStatus.PENDING_FACULTY_VALIDATION, pageable);
+        
+        log.info("Found {} agreements pending validation for this faculty", agreementPage.getTotalElements());
         return agreementPage.map(InternshipAgreementResponse::fromEntity);
     }
 
@@ -165,10 +187,22 @@ public class InternshipAgreementService {
         InternshipAgreement agreement = agreementRepository.findById(agreementId)
                 .orElseThrow(() -> new ResourceNotFoundException("InternshipAgreement", "id", agreementId));
 
-        // Check if faculty is assigned (if assignment logic exists)
-        if (agreement.getFacultyValidator() == null || !agreement.getFacultyValidator().getId().equals(currentFaculty.getId())) {
-             log.warn("Faculty ID {} is not assigned to validate agreement ID {}", currentFaculty.getId(), agreementId);
-             throw new UnauthorizedAccessException("You are not assigned to validate this agreement.");
+        // Check if faculty can validate this agreement (same faculty as student)
+        Application application = agreement.getApplication();
+        User student = application.getStudent();
+        
+        boolean canValidate = false;
+        if (agreement.getFacultyValidator() != null && agreement.getFacultyValidator().getId().equals(currentFaculty.getId())) {
+            canValidate = true; // Direct assignment
+        } else if (currentFaculty.getFaculty() != null && student.getFaculty() != null && 
+                   currentFaculty.getFaculty().getId().equals(student.getFaculty().getId())) {
+            canValidate = true; // Same faculty
+            agreement.setFacultyValidator(currentFaculty); // Assign for tracking
+        }
+        
+        if (!canValidate) {
+            log.warn("Faculty ID {} cannot validate agreement ID {} - not same faculty as student", currentFaculty.getId(), agreementId);
+            throw new UnauthorizedAccessException("You are not authorized to validate this agreement.");
         }
 
         // Check current status
@@ -182,8 +216,9 @@ public class InternshipAgreementService {
             agreement.setFacultyValidationDate(LocalDateTime.now());
             agreement.setFacultyRejectionReason(null); // Clear reason if previously rejected
             log.info("Agreement ID {} validated by faculty ID {}", agreementId, currentFaculty.getId());
-            // TODO: Assign Admin Approver? Or is there a pool? For now, leave null.
-            // TODO: Notify assigned Admin (if any) and student/company.
+            
+            // Notify student of validation
+            notifyStudentOfValidation(agreement, true);
         } else {
             if (request.getRejectionReason() == null || request.getRejectionReason().isBlank()) {
                  throw new BadRequestException("Rejection reason is required when rejecting an agreement.");
@@ -192,10 +227,16 @@ public class InternshipAgreementService {
             agreement.setFacultyValidationDate(LocalDateTime.now()); // Record rejection time
             agreement.setFacultyRejectionReason(request.getRejectionReason());
             log.info("Agreement ID {} rejected by faculty ID {} with reason: {}", agreementId, currentFaculty.getId(), request.getRejectionReason());
-            // TODO: Notify student/company of rejection.
+            
+            // Notify student of rejection
+            notifyStudentOfValidation(agreement, false);
         }
 
         InternshipAgreement updatedAgreement = agreementRepository.save(agreement);
+        
+        // Notify stakeholders about validation result
+        notifyAgreementValidation(updatedAgreement, request.getValidated());
+        
         return InternshipAgreementResponse.fromEntity(updatedAgreement);
     }
 
@@ -246,7 +287,6 @@ public class InternshipAgreementService {
             agreement.setAdminApprovalDate(LocalDateTime.now());
             agreement.setAdminRejectionReason(null);
             log.info("Agreement ID {} approved by admin ID {}", agreementId, currentAdmin.getId());
-            // TODO: Notify student/company/faculty of final approval.
         } else {
              if (request.getRejectionReason() == null || request.getRejectionReason().isBlank()) {
                  throw new BadRequestException("Rejection reason is required when rejecting an agreement.");
@@ -256,10 +296,13 @@ public class InternshipAgreementService {
             agreement.setAdminApprovalDate(LocalDateTime.now()); // Record rejection time
             agreement.setAdminRejectionReason(request.getRejectionReason());
              log.info("Agreement ID {} rejected by admin ID {} with reason: {}", agreementId, currentAdmin.getId(), request.getRejectionReason());
-             // TODO: Notify student/company/faculty of rejection.
         }
 
         InternshipAgreement updatedAgreement = agreementRepository.save(agreement);
+        
+        // Notify stakeholders about approval result
+        notifyAgreementApproval(updatedAgreement, request.getApproved());
+        
         return InternshipAgreementResponse.fromEntity(updatedAgreement);
     }
 
@@ -306,6 +349,143 @@ public class InternshipAgreementService {
         
         Page<InternshipAgreement> agreementPage = agreementRepository.findAll(pageable);
         return agreementPage.map(InternshipAgreementResponse::fromEntity);
+    }
+
+    /**
+     * Notifies all stakeholders when a new agreement is created
+     */
+    private void notifyNewAgreement(InternshipAgreement agreement) {
+        try {
+            Application application = agreement.getApplication();
+            
+            // Notify student
+            notificationService.createAndSendNotification(
+                application.getStudent(),
+                NotificationType.NEW_AGREEMENT_CREATED,
+                "Nouvelle convention de stage créée pour votre candidature",
+                "/agreements/" + agreement.getId()
+            );
+            
+            log.info("Notifications sent for new agreement ID: {}", agreement.getId());
+        } catch (Exception e) {
+            log.error("Error sending notifications for agreement ID: {}", agreement.getId(), e);
+            // Continue without failing the agreement creation
+        }
+    }
+    
+    /**
+     * Notifies stakeholders about faculty validation result
+     */
+    private void notifyAgreementValidation(InternshipAgreement agreement, boolean validated) {
+        log.info("Agreement validation notification for ID: {} - validated: {}", agreement.getId(), validated);
+        // Simplified notification - just log for now
+    }
+    
+    /**
+     * Notifies student about faculty validation result
+     */
+    private void notifyStudentOfValidation(InternshipAgreement agreement, boolean validated) {
+        try {
+            Application application = agreement.getApplication();
+            User student = application.getStudent();
+            
+            if (validated) {
+                notificationService.createNotification(
+                    student,
+                    NotificationType.AGREEMENT_VALIDATED,
+                    "Votre convention de stage a été validée par la faculté",
+                    "/student/agreements"
+                );
+                log.info("Validation notification sent to student ID: {} for agreement ID: {}", student.getId(), agreement.getId());
+            } else {
+                String reason = agreement.getFacultyRejectionReason();
+                notificationService.createNotification(
+                    student,
+                    NotificationType.AGREEMENT_REJECTED,
+                    "Votre convention de stage a été rejetée par la faculté. Raison: " + reason,
+                    "/student/agreements"
+                );
+                log.info("Rejection notification sent to student ID: {} for agreement ID: {}", student.getId(), agreement.getId());
+            }
+        } catch (Exception e) {
+            log.error("Error sending validation notification for agreement ID: {}", agreement.getId(), e);
+        }
+    }
+    
+    /**
+     * Notifies stakeholders about admin approval result
+     */
+    private void notifyAgreementApproval(InternshipAgreement agreement, boolean approved) {
+        log.info("Agreement approval notification for ID: {} - approved: {}", agreement.getId(), approved);
+        // Simplified notification - just log for now
+    }
+
+    /**
+     * Creates a new agreement from request data
+     */
+    @Transactional
+    public InternshipAgreementResponse createAgreement(Map<String, Object> agreementData) {
+        log.info("Creating new agreement from request data");
+        
+        Long applicationId = Long.valueOf(agreementData.get("applicationId").toString());
+        return InternshipAgreementResponse.fromEntity(createAgreementForApplication(applicationId));
+    }
+
+    /**
+     * Signs an agreement by the current authenticated user
+     */
+    @Transactional
+    public InternshipAgreementResponse signAgreement(Long agreementId) {
+        User currentUser = userService.getCurrentUser();
+        log.info("User {} attempting to sign agreement ID: {}", currentUser.getId(), agreementId);
+
+        InternshipAgreement agreement = agreementRepository.findById(agreementId)
+                .orElseThrow(() -> new ResourceNotFoundException("InternshipAgreement", "id", agreementId));
+
+        Application application = agreement.getApplication();
+        LocalDateTime now = LocalDateTime.now();
+        boolean updated = false;
+
+        // Determine who is signing based on user role and relationship to the agreement
+        switch (currentUser.getRole()) {
+            case STUDENT:
+                if (application.getStudent().getId().equals(currentUser.getId()) && !agreement.getSignedByStudent()) {
+                    agreement.setSignedByStudent(true);
+                    agreement.setStudentSignatureDate(now);
+                    updated = true;
+                    log.info("Student signed agreement ID: {}", agreementId);
+                }
+                break;
+            case COMPANY:
+                if (application.getInternshipOffer().getCompany().getPrimaryContactUser().getId().equals(currentUser.getId()) && !agreement.getSignedByCompany()) {
+                    agreement.setSignedByCompany(true);
+                    agreement.setCompanySignatureDate(now);
+                    updated = true;
+                    log.info("Company signed agreement ID: {}", agreementId);
+                }
+                break;
+            case FACULTY:
+                if (agreement.getFacultyValidator() != null && agreement.getFacultyValidator().getId().equals(currentUser.getId()) && !agreement.getSignedByFaculty()) {
+                    agreement.setSignedByFaculty(true);
+                    agreement.setFacultySignatureDate(now);
+                    updated = true;
+                    log.info("Faculty signed agreement ID: {}", agreementId);
+                }
+                break;
+        }
+
+        if (!updated) {
+            throw new BadRequestException("User is not authorized to sign this agreement or has already signed");
+        }
+
+        // Check if all parties have signed
+        if (agreement.getSignedByStudent() && agreement.getSignedByCompany() && agreement.getSignedByFaculty()) {
+            agreement.setStatus(InternshipAgreementStatus.SIGNED);
+            log.info("Agreement ID {} is now fully signed", agreementId);
+        }
+        
+        InternshipAgreement savedAgreement = agreementRepository.save(agreement);
+        return InternshipAgreementResponse.fromEntity(savedAgreement);
     }
 
 }

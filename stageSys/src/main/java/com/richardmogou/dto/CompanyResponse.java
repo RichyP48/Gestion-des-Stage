@@ -1,6 +1,7 @@
 package com.richardmogou.dto;
 
 import com.richardmogou.entity.Company;
+import com.richardmogou.enums.CompanyStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,6 +20,7 @@ public class CompanyResponse {
     private String website;
     private String address;
     private String industrySector;
+    private CompanyStatus status;
     private Long primaryContactUserId; // ID of the contact user
     private String primaryContactUserEmail; // Email of the contact user
     private LocalDateTime createdAt;
@@ -36,6 +38,7 @@ public class CompanyResponse {
                 .website(company.getWebsite())
                 .address(company.getAddress())
                 .industrySector(company.getIndustrySector())
+                .status(company.getStatus())
                 .primaryContactUserId(company.getPrimaryContactUser() != null ? company.getPrimaryContactUser().getId() : null)
                 .primaryContactUserEmail(company.getPrimaryContactUser() != null ? company.getPrimaryContactUser().getEmail() : null)
                 .createdAt(company.getCreatedAt())

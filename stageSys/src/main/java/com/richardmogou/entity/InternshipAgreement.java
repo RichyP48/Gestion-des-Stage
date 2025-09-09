@@ -53,9 +53,19 @@ public class InternshipAgreement {
     @Column(columnDefinition = "TEXT")
     private String adminRejectionReason;
 
-    // Optional: Store signature data if implementing electronic signatures
-    // @Lob
-    // private byte[] facultySignatureData;
+    // Signature tracking fields
+    @Column(nullable = true)
+    private Boolean signedByStudent = false;
+
+    @Column(nullable = true)
+    private Boolean signedByCompany = false;
+
+    @Column(nullable = true)
+    private Boolean signedByFaculty = false;
+
+    private LocalDateTime studentSignatureDate;
+    private LocalDateTime companySignatureDate;
+    private LocalDateTime facultySignatureDate;
 
     @CreationTimestamp
     @Column(updatable = false, nullable = false)

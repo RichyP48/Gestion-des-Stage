@@ -3,20 +3,27 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AgreementService } from '../../../../services/agreement.service';
 import { AuthService } from '../../../../services/auth.service';
+import { NotificationService } from '../../../../services/notification.service';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 
 interface Agreement {
   id: number;
-  studentName: string;
-  companyName: string;
-  offerTitle: string;
-  startDate: Date;
-  endDate: Date;
-  status: 'DRAFT' | 'PENDING' | 'SIGNED' | 'ACTIVE' | 'COMPLETED';
-  signedByStudent: boolean;
-  signedByCompany: boolean;
-  signedByFaculty: boolean;
+  studentName?: string;
+  companyName?: string;
+  offerTitle?: string;
+  startDate?: Date;
+  endDate?: Date;
+  status: string;
+  signedByStudent?: boolean;
+  signedByCompany?: boolean;
+  signedByFaculty?: boolean;
+  approvedByAdmin?: boolean;
+  studentSignatureDate?: string;
+  companySignatureDate?: string;
+  facultySignatureDate?: string;
+  adminApprovalDate?: string;
+  facultyValidationDate?: string;
 }
 
 @Component({
@@ -62,25 +69,35 @@ interface Agreement {
             </div>
             
             <div class="mb-4">
-              <p class="text-sm font-medium text-gray-700 mb-2">Signatures</p>
-              <div class="flex space-x-4">
+              <p class="text-sm font-medium text-gray-700 mb-2">Approbations & Signatures</p>
+              <div class="grid grid-cols-2 gap-4">
                 <div class="flex items-center">
-                  <svg [ngClass]="agreement.signedByStudent ? 'text-green-500' : 'text-gray-300'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <svg [ngClass]="getApprovalStatus(agreement, 'student') ? 'text-green-500' : 'text-gray-300'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                   </svg>
                   <span class="text-sm text-gray-600">Étudiant</span>
+                  <span *ngIf="agreement.studentSignatureDate" class="text-xs text-gray-500 ml-1">({{agreement.studentSignatureDate | date:'dd/MM'}})</span>
                 </div>
                 <div class="flex items-center">
-                  <svg [ngClass]="agreement.signedByCompany ? 'text-green-500' : 'text-gray-300'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <svg [ngClass]="getApprovalStatus(agreement, 'company') ? 'text-green-500' : 'text-gray-300'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                   </svg>
                   <span class="text-sm text-gray-600">Entreprise</span>
+                  <span *ngIf="agreement.companySignatureDate" class="text-xs text-gray-500 ml-1">({{agreement.companySignatureDate | date:'dd/MM'}})</span>
                 </div>
                 <div class="flex items-center">
-                  <svg [ngClass]="agreement.signedByFaculty ? 'text-green-500' : 'text-gray-300'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <svg [ngClass]="getApprovalStatus(agreement, 'faculty') ? 'text-green-500' : 'text-gray-300'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                   </svg>
                   <span class="text-sm text-gray-600">Faculté</span>
+                  <span *ngIf="agreement.facultyValidationDate" class="text-xs text-gray-500 ml-1">({{agreement.facultyValidationDate | date:'dd/MM'}})</span>
+                </div>
+                <div class="flex items-center">
+                  <svg [ngClass]="getApprovalStatus(agreement, 'admin') ? 'text-green-500' : 'text-gray-300'" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span class="text-sm text-gray-600">Administration</span>
+                  <span *ngIf="agreement.adminApprovalDate" class="text-xs text-gray-500 ml-1">({{agreement.adminApprovalDate | date:'dd/MM'}})</span>
                 </div>
               </div>
             </div>
@@ -90,7 +107,7 @@ interface Agreement {
                       class="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 text-sm">
                 Télécharger PDF
               </button>
-              <button *ngIf="!agreement.signedByStudent && agreement.status === 'PENDING'" 
+              <button *ngIf="canStudentSign(agreement)" 
                       (click)="signAgreement(agreement)"
                       class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm">
                 Signer
@@ -108,7 +125,8 @@ export class StudentAgreementsComponent implements OnInit {
 
   constructor(
     private agreementService: AgreementService,
-    private authService: AuthService
+    private authService: AuthService,
+    private notificationService: NotificationService
   ) {
     console.log('📜 StudentAgreementsComponent initialized');
   }
@@ -128,36 +146,73 @@ export class StudentAgreementsComponent implements OnInit {
 
     console.log('👤 Loading agreements for user:', currentUser.id);
 
-    this.agreementService.getStudentAgreements(0, 50).pipe(
-      catchError(error => {
-        console.error('❌ Error loading agreements from API:', error);
-        // Return demo data as fallback
-        return of({
-          content: [
-            {
-              id: 1,
-              studentName: 'Jean Dupont',
-              companyName: 'TechCorp',
-              offerTitle: 'Stage Développement Web',
-              startDate: new Date('2024-06-01'),
-              endDate: new Date('2024-11-30'),
-              status: 'PENDING',
-              signedByStudent: false,
-              signedByCompany: true,
-              signedByFaculty: false
-            }
-          ],
-          totalElements: 1
-        });
-      })
-    ).subscribe({
+    this.agreementService.getStudentAgreements(0, 50).subscribe({
       next: (data) => {
         console.log('✅ Agreements loaded successfully:', data);
+        const previousCount = this.agreements.length;
         this.agreements = data.content || data;
         console.log('📊 Total agreements:', this.agreements.length);
+        
+        // Check for status changes and notify
+        this.checkForStatusChanges(previousCount);
       },
       error: (error) => {
-        console.error('❌ Unexpected error loading agreements:', error);
+        console.error('❌ Error loading agreements:', error);
+        this.notificationService.showError('Erreur lors du chargement des conventions');
+        // Données de test en cas d'erreur
+        this.agreements = [
+          {
+            id: 1,
+            offerTitle: 'Stage Développement Web',
+            companyName: 'TechCorp',
+            startDate: new Date('2024-06-01'),
+            endDate: new Date('2024-08-31'),
+            status: 'PENDING_FACULTY_VALIDATION',
+            signedByStudent: false,
+            signedByCompany: false,
+            signedByFaculty: false,
+            approvedByAdmin: false,
+            studentSignatureDate: undefined,
+            companySignatureDate: undefined,
+            facultyValidationDate: undefined,
+            adminApprovalDate: undefined
+          },
+          {
+            id: 2,
+            offerTitle: 'Stage Marketing Digital',
+            companyName: 'MarketPro',
+            startDate: new Date('2024-07-01'),
+            endDate: new Date('2024-09-30'),
+            status: 'APPROVED',
+            signedByStudent: true,
+            signedByCompany: true,
+            signedByFaculty: true,
+            approvedByAdmin: true,
+            studentSignatureDate: '2024-01-10',
+            companySignatureDate: '2024-01-12',
+            facultyValidationDate: '2024-01-14',
+            adminApprovalDate: '2024-01-16'
+          }
+        ];
+      }
+    });
+  }
+  
+  private checkForStatusChanges(previousCount: number) {
+    // Load server notifications to get real-time updates
+    this.notificationService.loadServerNotifications();
+    
+    // If new agreements or status changes, show notification
+    if (this.agreements.length > previousCount) {
+      this.notificationService.showInfo('Nouvelles mises à jour sur vos conventions');
+    }
+    
+    // Check for validated/rejected agreements and show local notifications
+    this.agreements.forEach(agreement => {
+      if (agreement.status === 'PENDING_ADMIN_APPROVAL') {
+        this.notificationService.showSuccess('Votre convention a été validée par la faculté');
+      } else if (agreement.status === 'REJECTED') {
+        this.notificationService.showError('Votre convention a été rejetée par la faculté');
       }
     });
   }
@@ -165,13 +220,7 @@ export class StudentAgreementsComponent implements OnInit {
   signAgreement(agreement: Agreement) {
     console.log('✍️ Signing agreement:', agreement.id);
     
-    this.agreementService.signAgreement(agreement.id).pipe(
-      catchError(error => {
-        console.error('❌ Error signing agreement via API:', error);
-        // Fallback: update locally
-        return of({ ...agreement, signedByStudent: true });
-      })
-    ).subscribe({
+    this.agreementService.signAgreement(agreement.id).subscribe({
       next: (updatedAgreement) => {
         console.log('✅ Agreement signed successfully:', updatedAgreement);
         agreement.signedByStudent = true;
@@ -182,16 +231,12 @@ export class StudentAgreementsComponent implements OnInit {
           console.log('🎉 Agreement fully signed!');
         }
         
-        console.log('📝 Updated agreement status:', {
-          id: agreement.id,
-          status: agreement.status,
-          signedByStudent: agreement.signedByStudent,
-          signedByCompany: agreement.signedByCompany,
-          signedByFaculty: agreement.signedByFaculty
-        });
+        this.notificationService.showSuccess('Convention signée avec succès');
+        this.loadAgreements(); // Recharger les données
       },
       error: (error) => {
-        console.error('❌ Unexpected error signing agreement:', error);
+        console.error('❌ Error signing agreement:', error);
+        this.notificationService.showError('Erreur lors de la signature de la convention');
       }
     });
   }
@@ -206,7 +251,7 @@ export class StudentAgreementsComponent implements OnInit {
         return of(null);
       })
     ).subscribe({
-      next: (blob) => {
+      next: (blob: Blob | null) => {
         if (blob) {
           console.log('✅ PDF downloaded successfully');
           
@@ -223,7 +268,7 @@ export class StudentAgreementsComponent implements OnInit {
           console.log('📎 PDF download initiated');
         }
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('❌ Unexpected error downloading PDF:', error);
       }
     });
@@ -244,10 +289,39 @@ export class StudentAgreementsComponent implements OnInit {
     const labels = {
       'DRAFT': 'Brouillon',
       'PENDING': 'En attente',
+      'PENDING_FACULTY_VALIDATION': 'En attente validation faculté',
+      'PENDING_ADMIN_APPROVAL': 'En attente approbation admin',
+      'APPROVED': 'Approuvée',
       'SIGNED': 'Signée',
       'ACTIVE': 'Active',
-      'COMPLETED': 'Terminée'
+      'COMPLETED': 'Terminée',
+      'REJECTED': 'Rejetée'
     };
     return labels[status as keyof typeof labels] || status;
+  }
+
+  getApprovalStatus(agreement: Agreement, party: string): boolean {
+    switch (party) {
+      case 'student':
+        return agreement.signedByStudent || false;
+      case 'company':
+        return agreement.signedByCompany || false;
+      case 'faculty':
+        return agreement.signedByFaculty || 
+               agreement.status === 'PENDING_ADMIN_APPROVAL' || 
+               agreement.status === 'APPROVED' || false;
+      case 'admin':
+        return agreement.approvedByAdmin || 
+               agreement.status === 'APPROVED' || false;
+      default:
+        return false;
+    }
+  }
+
+  canStudentSign(agreement: Agreement): boolean {
+    return !agreement.signedByStudent && 
+           (agreement.status === 'PENDING_FACULTY_VALIDATION' || 
+            agreement.status === 'PENDING_ADMIN_APPROVAL' || 
+            agreement.status === 'APPROVED');
   }
 }

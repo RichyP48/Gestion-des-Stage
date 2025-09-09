@@ -103,6 +103,13 @@ export class AdminReportsComponent implements OnInit {
         errorRate: 0.2,
         storage: 67,
       },
+      agreementStats: {
+        totalAgreements: 234,
+        pendingAgreements: 45,
+        approvedAgreements: 189,
+        rejectedAgreements: 12,
+        signedAgreements: 156
+      }
     }
   }
 }

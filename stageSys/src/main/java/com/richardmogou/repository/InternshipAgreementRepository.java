@@ -8,6 +8,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -29,5 +31,16 @@ public interface InternshipAgreementRepository extends JpaRepository<InternshipA
 
     // Find all agreements with a specific status (for export)
     List<InternshipAgreement> findAllByStatus(InternshipAgreementStatus status);
+
+    // Find agreements for students from a specific faculty with a specific status
+    Page<InternshipAgreement> findByApplication_Student_FacultyAndStatus(com.richardmogou.entity.Faculty faculty, InternshipAgreementStatus status, Pageable pageable);
+    
+    // Custom query to find agreements by faculty user email
+    @Query("SELECT ia FROM InternshipAgreement ia JOIN ia.application a JOIN a.student s WHERE s.faculty.id = (SELECT u.faculty.id FROM User u WHERE u.email = :facultyEmail) AND ia.status = :status")
+    Page<InternshipAgreement> findAgreementsByFacultyEmailAndStatus(@Param("facultyEmail") String facultyEmail, @Param("status") InternshipAgreementStatus status, Pageable pageable);
+    
+    // Temporary query to find all agreements for testing
+    @Query("SELECT ia FROM InternshipAgreement ia WHERE ia.status = :status")
+    Page<InternshipAgreement> findAllAgreementsByStatus(@Param("status") InternshipAgreementStatus status, Pageable pageable);
 
 }

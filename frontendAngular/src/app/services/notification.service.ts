@@ -1,129 +1,169 @@
 import { Injectable } from '@angular/core';
-import { HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { ApiService } from './api.service';
-import { WebSocketService } from './websocket.service';
-import { Notification, UnreadCountResponse } from '../models/notification.model';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../environments/environment';
+
+export interface Notification {
+  id: string;
+  type: 'success' | 'error' | 'warning' | 'info';
+  message: string;
+  timestamp: Date;
+  read: boolean;
+  link?: string;
+}
+
+export interface ServerNotification {
+  id: number;
+  message: string;
+  type: string;
+  read: boolean;
+  createdAt: string;
+  link?: string;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class NotificationService {
-   notifications: Notification[] = []; 
-  constructor(
-    private apiService: ApiService,
-    private webSocketService: WebSocketService
-  ) {
-    // Listen for real-time notifications from WebSocket
-    this.webSocketService.notifications$.subscribe(notification => {
-      // Notification handling logic can be added here
-      // For example, showing a toast or updating a notification badge
-      console.log('New notification received:', notification);
+  private notifications$ = new BehaviorSubject<Notification[]>([]);
+  private unreadCount$ = new BehaviorSubject<number>(0);
+  private apiUrl = environment.apiUrl;
+
+  constructor(private http: HttpClient) {}
+
+  getNotifications(): Observable<Notification[]> {
+    return this.notifications$.asObservable();
+  }
+
+  getUnreadCount(): Observable<number> {
+    return this.unreadCount$.asObservable();
+  }
+
+  showSuccess(message: string): void {
+    this.addNotification('success', message);
+  }
+
+  showError(message: string): void {
+    this.addNotification('error', message);
+  }
+
+  showWarning(message: string): void {
+    this.addNotification('warning', message);
+  }
+
+  showInfo(message: string): void {
+    this.addNotification('info', message);
+  }
+
+  private addNotification(type: 'success' | 'error' | 'warning' | 'info', message: string): void {
+    const notification: Notification = {
+      id: Date.now().toString(),
+      type,
+      message,
+      timestamp: new Date(),
+      read: false
+    };
+
+    const currentNotifications = this.notifications$.value;
+    const updatedNotifications = [notification, ...currentNotifications];
+    
+    this.notifications$.next(updatedNotifications);
+    this.updateUnreadCount();
+
+    // Auto-remove success notifications after 5 seconds
+    if (type === 'success') {
+      setTimeout(() => {
+        this.removeNotification(notification.id);
+      }, 5000);
+    }
+  }
+
+  markAsRead(notificationId: string): void {
+    const notifications = this.notifications$.value.map(n => 
+      n.id === notificationId ? { ...n, read: true } : n
+    );
+    this.notifications$.next(notifications);
+    this.updateUnreadCount();
+  }
+
+  markAllAsRead(): void {
+    const notifications = this.notifications$.value.map(n => ({ ...n, read: true }));
+    this.notifications$.next(notifications);
+    this.updateUnreadCount();
+  }
+
+  removeNotification(notificationId: string): void {
+    const notifications = this.notifications$.value.filter(n => n.id !== notificationId);
+    this.notifications$.next(notifications);
+    this.updateUnreadCount();
+  }
+
+  clearAll(): void {
+    this.notifications$.next([]);
+    this.unreadCount$.next(0);
+  }
+
+  private updateUnreadCount(): void {
+    const unreadCount = this.notifications$.value.filter(n => !n.read).length;
+    this.unreadCount$.next(unreadCount);
+  }
+
+  // Server notifications methods
+  getServerNotifications(page: number = 0, size: number = 10): Observable<any> {
+    return this.http.get(`${this.apiUrl}/notifications?page=${page}&size=${size}`);
+  }
+
+  getServerUnreadCount(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/notifications/unread-count`);
+  }
+
+  markServerNotificationAsRead(notificationId: number): Observable<any> {
+    return this.http.put(`${this.apiUrl}/notifications/${notificationId}/read`, {});
+  }
+
+  markAllServerNotificationsAsRead(): Observable<any> {
+    return this.http.put(`${this.apiUrl}/notifications/mark-all-read`, {});
+  }
+
+  deleteServerNotification(notificationId: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/notifications/${notificationId}`);
+  }
+
+  // Combined method to load server notifications into local state
+  loadServerNotifications(): void {
+    this.getServerNotifications().subscribe({
+      next: (response) => {
+        const serverNotifications = response.content || response;
+        const localNotifications: Notification[] = serverNotifications.map((sn: ServerNotification) => ({
+          id: sn.id.toString(),
+          type: this.mapServerTypeToLocal(sn.type),
+          message: sn.message,
+          timestamp: new Date(sn.createdAt),
+          read: sn.read,
+          link: sn.link
+        }));
+        
+        this.notifications$.next(localNotifications);
+        this.updateUnreadCount();
+      },
+      error: (error) => {
+        console.error('Error loading server notifications:', error);
+      }
     });
   }
 
-  /**
-   * Get user's notifications
-   * @param page Page number
-   * @param size Page size
-   */
-  getNotifications(page = 0, size = 15): Observable<any> {
-    const params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', 'createdAt,desc');
-    
-    return this.apiService.get<any>('/notifications/me', params);
+  private mapServerTypeToLocal(serverType: string): 'success' | 'error' | 'warning' | 'info' {
+    switch (serverType) {
+      case 'AGREEMENT_VALIDATED':
+      case 'APPLICATION_ACCEPTED':
+        return 'success';
+      case 'AGREEMENT_REJECTED':
+      case 'APPLICATION_REJECTED':
+        return 'error';
+      case 'AGREEMENT_ACTION_REQUIRED':
+        return 'warning';
+      default:
+        return 'info';
+    }
   }
-
-  /**
-   * Get count of unread notifications
-   */
-  getUnreadCount(): Observable<UnreadCountResponse> {
-    return this.apiService.get<UnreadCountResponse>('/notifications/me/unread-count');
-  }
-
-  /**
-   * Mark a notification as read
-   * @param notificationId ID of the notification to mark as read
-   */
-  markAsRead(notificationId: number): Observable<Notification> {
-    return this.apiService.put<Notification>(`/notifications/${notificationId}/read`);
-  }
-
-  /**
-   * Mark all notifications as read
-   */
-  markAllAsRead(): Observable<{ updatedCount: number }> {
-    return this.apiService.put<{ updatedCount: number }>('/notifications/me/read-all');
-  }
-  /**
- * Get server notifications
- * @param page Page number
- * @param size Page size
- */
-getServerNotifications(page = 0, size = 15): Observable<any> {
-  const params = new HttpParams()
-    .set('page', page.toString())
-    .set('size', size.toString())
-    .set('sort', 'createdAt,desc');
-  
-  return this.apiService.get<any>('/notifications/server', params);
-}
-/**
- * Delete a notification by ID
- * @param notificationId ID of the notification to delete
- */
-deleteNotification(notificationId: number): Observable<void> {
-  return this.apiService.delete<void>(`/notifications/${notificationId}`);
-}
-
-/**
- * Clear all notifications (locally)
- */
-clear(): void {
-  this.notifications = []; 
-}
-  /**
-   * Handle errors from API calls
-   * @param error Error object
-   */
-  private handleError(error: any): void {
-    console.error('An error occurred:', error);
-    // Logique additionnelle pour gérer les erreurs, comme afficher une notification
-  }
-   success(message: string): void {
-    // Implémentez la logique pour afficher une notification de succès
-    console.log('Success:', message);
-  }
-
-  error(message: string): void {
-    // Implémentez la logique pour afficher une notification d'erreur
-    console.error('Error:', message);
-  }
-  showSuccess(message: string) {
-    this.show(message, 'success')
-  }
-
-  showError(message: string) {
-    this.show(message, 'error')
-  }
-
-  private show(message: string, type: 'success' | 'error') {
-    const toast = document.createElement('div')
-
-    toast.textContent = message
-    toast.className = `
-      fixed bottom-5 right-5 z-50 px-4 py-3 rounded shadow-lg text-white
-      ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}
-      animate-slide-in
-    `
-    document.body.appendChild(toast)
-
-    setTimeout(() => {
-      toast.classList.add('opacity-0')
-      setTimeout(() => document.body.removeChild(toast), 300)
-    }, 3000)
-  }
-
 }

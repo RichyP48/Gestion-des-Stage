@@ -20,5 +20,9 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'reports',
     loadComponent: () => import('./admin-reports/admin-reports.component').then(m => m.AdminReportsComponent)
+  },
+  {
+    path: 'agreements',
+    loadComponent: () => import('./admin-agreements/admin-agreements.component').then(m => m.AdminAgreementsComponent)
   }
 ];

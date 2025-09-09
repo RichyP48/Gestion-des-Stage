@@ -1,122 +1,62 @@
 import { Injectable } from '@angular/core';
 import { HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { 
-  InternshipAgreement, 
-  FacultyValidationRequest, 
-  AdminApprovalRequest 
-} from '../models/agreement.model';
 import { ApiService } from './api.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AgreementService {
+
   constructor(private apiService: ApiService) {}
 
-  /**
-   * Get an agreement by ID
-   * @param agreementId Agreement ID
-   */
-  getAgreementById(agreementId: number): Observable<InternshipAgreement> {
-    return this.apiService.get<InternshipAgreement>(`/agreements/${agreementId}`);
+  getFacultyPendingAgreements(): Observable<any> {
+    return this.apiService.getPendingAgreements();
   }
 
-  /**
-   * Download agreement PDF
-   * @param agreementId Agreement ID
-   */
-  downloadAgreementPdf(agreementId: number): Observable<Blob> {
-    return this.apiService.get<Blob>(`/agreements/${agreementId}/pdf`, new HttpParams(), 'blob');
+  validateAgreement(agreementId: number, validated: boolean, rejectionReason?: string): Observable<any> {
+    const payload = {
+      validated,
+      rejectionReason
+    };
+    return this.apiService.validateAgreement(agreementId, payload);
   }
 
-  /**
-   * Get agreements for current student
-   * @param page Page number
-   * @param size Page size
-   */
   getStudentAgreements(page = 0, size = 10): Observable<any> {
-    const params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', 'createdAt,desc');
-    
-    return this.apiService.get<any>('/students/me/agreements', params);
+    // Utilise l'endpoint existant du service API
+    return this.apiService.getStudentAgreements(page, size);
   }
 
-  /**
-   * Get agreements pending faculty validation (faculty only)
-   * @param page Page number
-   * @param size Page size
-   */
-  getPendingFacultyAgreements(page = 0, size = 10): Observable<any> {
-    const params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', 'createdAt,asc');
-    
-    return this.apiService.get<any>('/faculty/me/agreements/pending', params);
+  downloadAgreementPdf(agreementId: number): Observable<Blob> {
+    return this.apiService.downloadAgreementPdf(agreementId);
   }
 
-  /**
-   * Validate or reject an agreement (faculty only)
-   * @param agreementId Agreement ID
-   * @param validationData Validation data
-   */
-  validateAgreement(agreementId: number, validationData: FacultyValidationRequest): Observable<InternshipAgreement> {
-    return this.apiService.put<InternshipAgreement>(`/agreements/${agreementId}/validate`, validationData);
+  signAgreement(agreementId: number): Observable<any> {
+    return this.apiService.signStudentAgreement(agreementId);
   }
 
-  /**
-   * Get agreements pending admin approval (admin only)
-   * @param page Page number
-   * @param size Page size
-   */
+  createAgreement(agreementData: any): Observable<any> {
+    return this.apiService.post('/agreements', agreementData);
+  }
+
   getPendingAdminAgreements(page = 0, size = 10): Observable<any> {
-    const params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', 'createdAt,asc');
-    
-    return this.apiService.get<any>('/admin/agreements/pending', params);
+    return this.apiService.getPendingAgreementsAdmin(page, size);
   }
 
-  /**
-   * Approve or reject an agreement (admin only)
-   * @param agreementId Agreement ID
-   * @param approvalData Approval data
-   */
-  approveAgreement(agreementId: number, approvalData: AdminApprovalRequest): Observable<InternshipAgreement> {
-    return this.apiService.put<InternshipAgreement>(`/agreements/${agreementId}/approve`, approvalData);
-  }
-
-  /**
-   * Get all agreements (admin only)
-   * @param page Page number
-   * @param size Page size
-   */
   getAllAgreements(page = 0, size = 20): Observable<any> {
-    const params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', 'createdAt,desc');
-    
-    return this.apiService.get<any>('/admin/agreements', params);
+    return this.apiService.getAllAgreementsAdmin(page, size);
   }
 
-  /**
-   * Sign an agreement (student)
-   * @param agreementId Agreement ID
-   */
-  signAgreement(agreementId: number): Observable<InternshipAgreement> {
-    return this.apiService.put<InternshipAgreement>(`/agreements/${agreementId}/sign`, {});
+  approveAgreement(agreementId: number, approvalData: any): Observable<any> {
+    return this.apiService.approveAgreementAdmin(agreementId, approvalData);
   }
 
-  /**
-   * Decline an agreement (student)
-   * @param agreementId Agreement ID
-   */
-  declineAgreement(agreementId: number): Observable<InternshipAgreement> {
-    return this.apiService.put<InternshipAgreement>(`/agreements/${agreementId}/decline`, {});
+  getCompanyAgreements(page = 0, size = 10): Observable<any> {
+    // Utilise l'endpoint existant du service API
+    return this.apiService.getCompanyAgreements(page, size);
+  }
+
+  signAgreementAsCompany(agreementId: number): Observable<any> {
+    return this.apiService.signCompanyAgreement(agreementId);
   }
 }

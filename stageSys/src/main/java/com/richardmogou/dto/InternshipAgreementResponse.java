@@ -24,6 +24,14 @@ public class InternshipAgreementResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    // Signature fields
+    private Boolean signedByStudent;
+    private Boolean signedByCompany;
+    private Boolean signedByFaculty;
+    private LocalDateTime studentSignatureDate;
+    private LocalDateTime companySignatureDate;
+    private LocalDateTime facultySignatureDate;
+
     // Related Info
     private Long applicationId;
     private Long studentId;
@@ -67,6 +75,12 @@ public class InternshipAgreementResponse {
                 .facultyValidatorName(agreement.getFacultyValidator() != null ? agreement.getFacultyValidator().getFirstName() + " " + agreement.getFacultyValidator().getLastName() : null)
                 .adminApproverId(agreement.getAdminApprover() != null ? agreement.getAdminApprover().getId() : null)
                 .adminApproverName(agreement.getAdminApprover() != null ? agreement.getAdminApprover().getFirstName() + " " + agreement.getAdminApprover().getLastName() : null)
+                .signedByStudent(agreement.getSignedByStudent())
+                .signedByCompany(agreement.getSignedByCompany())
+                .signedByFaculty(agreement.getSignedByFaculty())
+                .studentSignatureDate(agreement.getStudentSignatureDate())
+                .companySignatureDate(agreement.getCompanySignatureDate())
+                .facultySignatureDate(agreement.getFacultySignatureDate())
                 .build();
     }
 }

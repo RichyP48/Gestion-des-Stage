@@ -4,8 +4,6 @@ import com.richardmogou.dto.NotificationResponse;
 import com.richardmogou.entity.Notification;
 import com.richardmogou.entity.User;
 import com.richardmogou.entity.enums.NotificationType;
-import com.richardmogou.exception.ResourceNotFoundException;
-import com.richardmogou.exception.UnauthorizedAccessException;
 import com.richardmogou.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -32,6 +30,25 @@ public class NotificationService {
      * This method would typically be called by other services.
      */
     @Transactional
+    public void createNotification(User recipient, NotificationType type, String message, String link) {
+        if (recipient == null) {
+            log.warn("Attempted to create notification for null recipient. Type: {}, Message: {}", type, message);
+            return;
+        }
+        log.info("Creating notification for user ID {}: Type={}, Message={}", recipient.getId(), type, message);
+        Notification notification = new Notification();
+        notification.setRecipient(recipient);
+        notification.setType(type);
+        notification.setMessage(message);
+        notification.setLink(link);
+        notification.setRead(false);
+        notification.setCreatedAt(java.time.LocalDateTime.now());
+
+        notificationRepository.save(notification);
+        log.info("Notification created for user ID {}", recipient.getId());
+    }
+    
+    @Transactional
     public void createAndSendNotification(User recipient, NotificationType type, String message, String link) {
         if (recipient == null) {
             log.warn("Attempted to create notification for null recipient. Type: {}, Message: {}", type, message);
@@ -44,7 +61,7 @@ public class NotificationService {
         notification.setMessage(message);
         notification.setLink(link);
         notification.setRead(false);
-        // createdAt is set automatically by @CreationTimestamp
+        notification.setCreatedAt(java.time.LocalDateTime.now());
 
         Notification savedNotification = notificationRepository.save(notification);
 
@@ -88,12 +105,12 @@ public class NotificationService {
         log.info("Attempting to mark notification ID {} as read for user ID {}", notificationId, currentUser.getId());
 
         Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new ResourceNotFoundException("Notification", "id", notificationId));
+                .orElseThrow(() -> new RuntimeException("Notification not found"));
 
         // Authorization check
         if (!notification.getRecipient().getId().equals(currentUser.getId())) {
             log.warn("Unauthorized attempt by user ID {} to mark notification ID {} as read.", currentUser.getId(), notificationId);
-            throw new UnauthorizedAccessException("User is not authorized to mark this notification as read.");
+            throw new RuntimeException("User is not authorized to mark this notification as read.");
         }
 
         if (!notification.isRead()) {
@@ -128,5 +145,46 @@ public class NotificationService {
          User currentUser = userService.getCurrentUser();
          return notificationRepository.countByRecipientAndIsReadFalse(currentUser);
      }
+
+    // Méthodes pour le contrôleur
+    @Transactional(readOnly = true)
+    public Page<Notification> getUserNotifications(User user, Pageable pageable) {
+        return notificationRepository.findByRecipientOrderByCreatedAtDesc(user, pageable);
+    }
+    
+    @Transactional(readOnly = true)
+    public long getUnreadCount(User user) {
+        return notificationRepository.countByRecipientAndIsReadFalse(user);
+    }
+    
+    @Transactional
+    public void markAsRead(Long notificationId, User user) {
+        Notification notification = notificationRepository.findById(notificationId)
+            .orElseThrow(() -> new RuntimeException("Notification not found"));
+            
+        if (!notification.getRecipient().getId().equals(user.getId())) {
+            throw new RuntimeException("Unauthorized access to notification");
+        }
+        
+        notification.setRead(true);
+        notificationRepository.save(notification);
+    }
+    
+    @Transactional
+    public void markAllAsRead(User user) {
+        notificationRepository.markAllAsReadForRecipient(user);
+    }
+    
+    @Transactional
+    public void deleteNotification(Long notificationId, User user) {
+        Notification notification = notificationRepository.findById(notificationId)
+            .orElseThrow(() -> new RuntimeException("Notification not found"));
+            
+        if (!notification.getRecipient().getId().equals(user.getId())) {
+            throw new RuntimeException("Unauthorized access to notification");
+        }
+        
+        notificationRepository.delete(notification);
+    }
 
 }

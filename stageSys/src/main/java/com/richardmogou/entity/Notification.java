@@ -39,7 +39,6 @@ public class Notification {
 
     private String link; // Optional URL for navigation
 
-    @NotNull
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

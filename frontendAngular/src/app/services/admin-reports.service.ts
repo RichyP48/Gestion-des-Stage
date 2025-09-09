@@ -36,6 +36,13 @@ export interface AdminReportData {
     errorRate: number;
     storage: number;
   };
+  agreementStats: {
+    totalAgreements: number;
+    pendingAgreements: number;
+    approvedAgreements: number;
+    rejectedAgreements: number;
+    signedAgreements: number;
+  };
 }
 
 @Injectable({
@@ -80,5 +87,36 @@ export class AdminReportsService {
 
   getSystemHealth(): Observable<any> {
     return this.http.get(`${this.apiUrl}/stats/health`);
+  }
+
+  // ===== AGREEMENTS MANAGEMENT =====
+  getAllAgreements(page = 0, size = 20): Observable<any> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', 'createdAt,desc');
+    
+    return this.http.get(`${this.apiUrl}/agreements`, { params });
+  }
+
+  getPendingAgreements(page = 0, size = 10): Observable<any> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', 'createdAt,asc');
+    
+    return this.http.get(`${this.apiUrl}/agreements/pending`, { params });
+  }
+
+  getAgreementStats(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/stats/agreements`);
+  }
+
+  approveAgreement(agreementId: number, approvalData: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/agreements/${agreementId}/approve`, approvalData);
+  }
+
+  rejectAgreement(agreementId: number, rejectionData: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/agreements/${agreementId}/reject`, rejectionData);
   }
 }

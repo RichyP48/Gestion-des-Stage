@@ -57,6 +57,15 @@ public class User {
 
     private String phoneNumber;
 
+    // Student-specific fields
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "school_id")
+    private School school;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "faculty_id")
+    private Faculty faculty;
+
     // Relationships will be defined in other entities where User is referenced
     // (e.g., Company, Application, InternshipAgreement, Message, Notification)
 }
