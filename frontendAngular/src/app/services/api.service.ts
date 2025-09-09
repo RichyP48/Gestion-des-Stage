@@ -136,6 +136,53 @@ export class ApiService {
     return this.http.get(`${this.apiUrl}/companies/me/offers`, { params });
   }
 
+  // ===== COMPANY AGREEMENTS =====
+  getCompanyAgreements(page = 0, size = 10): Observable<any> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+    
+    return this.http.get(`${this.apiUrl}/companies/me/agreements`, { params });
+  }
+
+  signCompanyAgreement(agreementId: number): Observable<any> {
+    return this.http.put(`${this.apiUrl}/companies/me/agreements/${agreementId}/sign`, {});
+  }
+
+  // ===== FACULTY AGREEMENTS =====
+  getPendingAgreements(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/faculty/me/agreements/pending`);
+  }
+
+  validateAgreement(agreementId: number, payload: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/agreements/${agreementId}/validate`, payload);
+  }
+
+  // ===== ADMIN AGREEMENTS =====
+  getPendingAgreementsAdmin(page = 0, size = 10): Observable<any> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+    
+    return this.http.get(`${this.apiUrl}/admin/agreements/pending`, { params });
+  }
+
+  getAllAgreementsAdmin(page = 0, size = 20): Observable<any> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+    
+    return this.http.get(`${this.apiUrl}/admin/agreements`, { params });
+  }
+
+  approveAgreementAdmin(agreementId: number, payload: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/agreements/${agreementId}/approve`, payload);
+  }
+
+  downloadAgreementPdf(agreementId: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/agreements/${agreementId}/pdf`, { responseType: 'blob' });
+  }
+
   // ===== APPLICATIONS =====
   submitApplication(offerId: number, coverLetter: string, cvFile: File): Observable<any> {
     const formData = new FormData();
@@ -151,6 +198,19 @@ export class ApiService {
       .set('size', size.toString());
     
     return this.http.get(`${this.apiUrl}/students/me/applications`, { params });
+  }
+
+  // ===== STUDENT AGREEMENTS =====
+  getStudentAgreements(page = 0, size = 10): Observable<any> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+    
+    return this.http.get(`${this.apiUrl}/students/me/agreements`, { params });
+  }
+
+  signStudentAgreement(agreementId: number): Observable<any> {
+    return this.http.put(`${this.apiUrl}/students/me/agreements/${agreementId}/sign`, {});
   }
 
   getCompanyApplications(page = 0, size = 10, offerId?: number): Observable<any> {
@@ -176,22 +236,6 @@ export class ApiService {
   // ===== AGREEMENTS =====
   getAgreementById(agreementId: number): Observable<any> {
     return this.http.get(`${this.apiUrl}/agreements/${agreementId}`);
-  }
-
-  downloadAgreementPdf(agreementId: number): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/agreements/${agreementId}/pdf`, { responseType: 'blob' });
-  }
-
-  getPendingAgreements(page = 0, size = 10): Observable<any> {
-    const params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString());
-    
-    return this.http.get(`${this.apiUrl}/faculty/me/agreements/pending`, { params });
-  }
-
-  validateAgreement(agreementId: number, validation: any): Observable<any> {
-    return this.http.put(`${this.apiUrl}/agreements/${agreementId}/validate`, validation);
   }
 
   // ===== COMPANIES =====
@@ -261,31 +305,8 @@ export class ApiService {
     return this.http.get(`${this.apiUrl}/admin/stats/health`);
   }
 
-  // ===== ADMIN AGREEMENTS =====
-  getAllAgreementsAdmin(page = 0, size = 20): Observable<any> {
-    const params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', 'createdAt,desc');
-    
-    return this.http.get(`${this.apiUrl}/admin/agreements`, { params });
-  }
-
-  getPendingAgreementsAdmin(page = 0, size = 10): Observable<any> {
-    const params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', 'createdAt,asc');
-    
-    return this.http.get(`${this.apiUrl}/admin/agreements/pending`, { params });
-  }
-
   getAgreementStatsAdmin(): Observable<any> {
     return this.http.get(`${this.apiUrl}/admin/stats/agreements`);
-  }
-
-  approveAgreementAdmin(agreementId: number, approvalData: any): Observable<any> {
-    return this.http.put(`${this.apiUrl}/admin/agreements/${agreementId}/approve`, approvalData);
   }
 
   rejectAgreementAdmin(agreementId: number, rejectionData: any): Observable<any> {

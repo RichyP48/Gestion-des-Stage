@@ -52,10 +52,14 @@ import { ApplicationStatus } from '../../../../models/application.model';
               <button *ngIf="application.cvPath" (click)="downloadCV(application)" class="px-3 py-1.5 text-xs font-medium text-primary-600 border border-primary-600 rounded-md hover:bg-primary-50">
                 Télécharger CV
               </button>
-              <button (click)="updateStatus(application, ApplicationStatus.ACCEPTED)" [disabled]="application.status === 'ACCEPTED'" class="px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50">
+              <button *ngIf="application.status === 'PENDING'"
+                      (click)="updateStatus(application, ApplicationStatus.ACCEPTED)" 
+                      class="px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded-md hover:bg-green-700">
                 Accepter
               </button>
-              <button (click)="updateStatus(application, ApplicationStatus.REJECTED)" [disabled]="application.status === 'REJECTED'" class="px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50">
+              <button *ngIf="application.status === 'PENDING'"
+                      (click)="updateStatus(application, ApplicationStatus.REJECTED)" 
+                      class="px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded-md hover:bg-red-700">
                 Refuser
               </button>
             </div>

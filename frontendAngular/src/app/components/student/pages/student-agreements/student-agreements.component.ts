@@ -107,7 +107,7 @@ interface Agreement {
                       class="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 text-sm">
                 Télécharger PDF
               </button>
-              <button *ngIf="!agreement.signedByStudent && agreement.status === 'PENDING'" 
+              <button *ngIf="canStudentSign(agreement)" 
                       (click)="signAgreement(agreement)"
                       class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm">
                 Signer
@@ -168,11 +168,11 @@ export class StudentAgreementsComponent implements OnInit {
             startDate: new Date('2024-06-01'),
             endDate: new Date('2024-08-31'),
             status: 'PENDING_FACULTY_VALIDATION',
-            signedByStudent: true,
+            signedByStudent: false,
             signedByCompany: false,
             signedByFaculty: false,
             approvedByAdmin: false,
-            studentSignatureDate: '2024-01-15',
+            studentSignatureDate: undefined,
             companySignatureDate: undefined,
             facultyValidationDate: undefined,
             adminApprovalDate: undefined
@@ -316,5 +316,12 @@ export class StudentAgreementsComponent implements OnInit {
       default:
         return false;
     }
+  }
+
+  canStudentSign(agreement: Agreement): boolean {
+    return !agreement.signedByStudent && 
+           (agreement.status === 'PENDING_FACULTY_VALIDATION' || 
+            agreement.status === 'PENDING_ADMIN_APPROVAL' || 
+            agreement.status === 'APPROVED');
   }
 }

@@ -44,15 +44,20 @@ import { NotificationService } from '../../../../services/notification.service';
               </p>
             </div>
             <div class="flex space-x-2">
-              <button 
+              <button *ngIf="agreement.status === 'PENDING_FACULTY_VALIDATION'"
                 (click)="validateAgreement(agreement.id, true)"
                 class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm">
                 Valider
               </button>
-              <button 
+              <button *ngIf="agreement.status === 'PENDING_FACULTY_VALIDATION'"
                 (click)="validateAgreement(agreement.id, false)"
                 class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm">
                 Rejeter
+              </button>
+              <button *ngIf="canFacultySign(agreement)"
+                (click)="signAgreement(agreement)"
+                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">
+                Signer
               </button>
             </div>
           </div>
@@ -145,5 +150,23 @@ export class FacultyAgreementsComponent implements OnInit {
     });
   }
 
+  signAgreement(agreement: any) {
+    this.agreementService.signAgreement(agreement.id).subscribe({
+      next: (response: any) => {
+        console.log('Agreement signed by faculty:', response);
+        this.notificationService.showSuccess('Convention signée avec succès');
+        this.loadPendingAgreements();
+      },
+      error: (error: any) => {
+        console.error('Error signing agreement:', error);
+        this.notificationService.showError('Erreur lors de la signature');
+      }
+    });
+  }
+
+  canFacultySign(agreement: any): boolean {
+    return agreement.status === 'PENDING_ADMIN_APPROVAL' && 
+           !agreement.signedByFaculty;
+  }
 
 }

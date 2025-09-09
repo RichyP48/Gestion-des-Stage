@@ -80,7 +80,9 @@ import { NotificationService } from '../../../../services/notification.service';
             <button (click)="downloadPDF(agreement)" class="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 text-sm">
               Télécharger PDF
             </button>
-            <button *ngIf="!agreement.signedByCompany" (click)="signAgreement(agreement)" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm">
+            <button *ngIf="!agreement.signedByCompany" 
+                    (click)="signAgreement(agreement)" 
+                    class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm">
               Signer
             </button>
           </div>
@@ -121,29 +123,29 @@ export class CompanyAgreementsComponent implements OnInit {
             id: 1,
             offerTitle: 'Stage Développement Web',
             studentName: 'Jean Dupont',
-            status: 'PENDING_ADMIN_APPROVAL',
+            status: 'PENDING_FACULTY_VALIDATION',
             signedByStudent: true,
             signedByCompany: false,
-            signedByFaculty: true,
+            signedByFaculty: false,
             approvedByAdmin: false,
             studentSignatureDate: '2024-01-15',
             companySignatureDate: undefined,
-            facultyValidationDate: '2024-01-17',
+            facultyValidationDate: undefined,
             adminApprovalDate: undefined
           },
           {
             id: 2,
             offerTitle: 'Stage Marketing Digital',
             studentName: 'Marie Martin',
-            status: 'APPROVED',
+            status: 'PENDING_ADMIN_APPROVAL',
             signedByStudent: true,
-            signedByCompany: true,
+            signedByCompany: false,
             signedByFaculty: true,
-            approvedByAdmin: true,
+            approvedByAdmin: false,
             studentSignatureDate: '2024-01-10',
-            companySignatureDate: '2024-01-12',
+            companySignatureDate: undefined,
             facultyValidationDate: '2024-01-14',
-            adminApprovalDate: '2024-01-16'
+            adminApprovalDate: undefined
           }
         ];
       }
@@ -155,12 +157,12 @@ export class CompanyAgreementsComponent implements OnInit {
       next: (updatedAgreement: any) => {
         agreement.signedByCompany = true;
         agreement.companySignatureDate = new Date();
-        this.notificationService.showSuccess('Convention signée avec succès');
+        this.notificationService.showSuccess('Convention signée avec succès par l\'entreprise');
         this.loadAgreements();
       },
       error: (error: any) => {
         console.error('Error signing agreement:', error);
-        this.notificationService.showError('Erreur lors de la signature');
+        this.notificationService.showError('Erreur lors de la signature de la convention');
       }
     });
   }
@@ -220,5 +222,12 @@ export class CompanyAgreementsComponent implements OnInit {
       default:
         return false;
     }
+  }
+
+  canSignAgreement(agreement: any): boolean {
+    return agreement.signedByStudent && 
+           (agreement.status === 'PENDING_FACULTY_VALIDATION' ||
+            agreement.status === 'PENDING_ADMIN_APPROVAL' || 
+            agreement.status === 'APPROVED');
   }
 }

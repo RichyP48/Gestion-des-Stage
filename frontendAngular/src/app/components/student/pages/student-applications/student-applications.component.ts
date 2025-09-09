@@ -47,11 +47,11 @@ import { NotificationService } from '../../../../services/notification.service';
                   </div>
                 </td>
                 <td class="px-4 py-3 text-sm text-gray-600">
-                  {{application.dateApplication | date:'dd/MM/yyyy'}}
+                  {{application.applicationDate | date:'dd/MM/yyyy'}}
                 </td>
                 <td class="px-4 py-3">
-                  <span [ngClass]="getStatusClass(application.statut)" class="px-2 py-1 rounded-full text-sm">
-                    {{getStatusLabel(application.statut)}}
+                  <span [ngClass]="getStatusClass(application.status)" class="px-2 py-1 rounded-full text-sm">
+                    {{getStatusLabel(application.status)}}
                   </span>
                 </td>
                 <td class="px-4 py-3">
