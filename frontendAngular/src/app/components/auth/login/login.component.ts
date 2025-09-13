@@ -80,7 +80,7 @@ import { DomMonitorService } from '../../../services/dom-monitor.service';
 
           <p class="mt-4 text-sm text-center text-gray-600">
             Pas de compte ?
-            <a routerLink="/auth/register" class="font-medium text-primary-600 hover:text-primary-500">
+            <a routerLink="/auth/register" class="font-medium cursor-pointer text-primary-600 hover:text-primary-500">
               S'inscrire ici
             </a>
           </p>
